@@ -1,0 +1,10 @@
+fn main() -> int {
+    var x: int = 10;
+    var y: int = 20;
+    var z: int = x + y * 2;
+    if (z == 50) {
+        return 0;
+    } else {
+        return 1;
+    }
+}

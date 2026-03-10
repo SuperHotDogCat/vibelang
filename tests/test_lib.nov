@@ -1,0 +1,23 @@
+import "lib/std.nov";
+
+fn main() -> int {
+    var v: Vector;
+    v.init(10);
+    v.push(100);
+    v.push(200);
+
+    var s: Set;
+    s.init(5);
+    s.add(1);
+    s.add(2);
+    s.add(1); // duplicate
+
+    if (v.get(0) == 100) {
+        if (s.contains(2)) {
+            if (s.contains(3) == false) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}

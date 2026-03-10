@@ -1,0 +1,65 @@
+// Novus Standard Library
+
+fn malloc(size: int) -> void* {}
+
+struct Vector {
+    data: int*;
+    size: int;
+    capacity: int;
+}
+
+impl Vector {
+    fn init(cap: int) -> void {
+        self.data = malloc(cap * 8) as int*;
+        self.size = 0;
+        self.capacity = cap;
+    }
+
+    fn push(val: int) -> void {
+        if (self.size == self.capacity) {
+            return;
+        }
+        self.data[self.size] = val;
+        self.size = self.size + 1;
+    }
+
+    fn get(idx: int) -> int {
+        return self.data[idx];
+    }
+}
+
+struct Set {
+    data: int*;
+    size: int;
+    capacity: int;
+}
+
+impl Set {
+    fn init(cap: int) -> void {
+        self.data = malloc(cap * 8) as int*;
+        self.size = 0;
+        self.capacity = cap;
+    }
+
+    fn contains(val: int) -> bool {
+        var i: int = 0;
+        while (i < self.size) {
+            if (self.data[i] == val) {
+                return true;
+            }
+            i = i + 1;
+        }
+        return false;
+    }
+
+    fn add(val: int) -> void {
+        if (self.contains(val)) {
+            return;
+        }
+        if (self.size == self.capacity) {
+            return;
+        }
+        self.data[self.size] = val;
+        self.size = self.size + 1;
+    }
+}
