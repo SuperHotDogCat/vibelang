@@ -34,6 +34,35 @@ fn main() -> int {
 }
 ```
 
+## Compiling and Running
+
+### Building the Compiler
+First, build the `novusc` compiler using `make`:
+```bash
+make
+```
+
+### Compiling a Novus file to an Executable
+To compile a `.nov` file into a standalone executable, follow these three steps:
+
+1. **Emit LLVM IR**:
+   ```bash
+   ./novusc main.nov
+   ```
+2. **Convert IR to Object File**:
+   ```bash
+   llc-18 main.ll -relocation-model=pic -filetype=obj -o main.o
+   ```
+3. **Link with libc and Create Executable**:
+   ```bash
+   gcc main.o -o main
+   ```
+
+**One-liner command:**
+```bash
+./novusc main.nov && llc-18 main.ll -relocation-model=pic -filetype=obj -o main.o && gcc main.o -o main && ./main
+```
+
 ## C/C++ Interoperability
 
 ### Calling C from Novus
@@ -49,12 +78,6 @@ Compile your Novus code to an object file and link it with your C code:
 ./novusc mycode.nov
 llc-18 mycode.ll -relocation-model=pic -filetype=obj -o mycode.o
 gcc main.c mycode.o -o demo
-```
-
-## Building the Compiler
-
-```bash
-make
 ```
 
 ## Project Structure

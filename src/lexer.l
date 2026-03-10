@@ -52,7 +52,28 @@ extern int yylex();
 
 [0-9]+\.[0-9]+      { yylval.fval = atof(yytext); return FVAL; }
 [0-9]+              { yylval.ival = atoll(yytext); return IVAL; }
-\"(\\.|[^"\\])*\"  { yylval.sval = new std::string(yytext + 1, strlen(yytext) - 2); return SVAL; }
+
+\"                  {
+                        std::string* s = new std::string();
+                        int c;
+                        while ((c = yyinput()) != '\"' && c != EOF) {
+                            if (c == '\\') {
+                                switch (c = yyinput()) {
+                                    case 'n': s->push_back('\n'); break;
+                                    case 't': s->push_back('\t'); break;
+                                    case 'r': s->push_back('\r'); break;
+                                    case '\\': s->push_back('\\'); break;
+                                    case '\"': s->push_back('\"'); break;
+                                    default: s->push_back(c); break;
+                                }
+                            } else {
+                                s->push_back(c);
+                            }
+                        }
+                        yylval.sval = s;
+                        return SVAL;
+                    }
+
 \'(\\.|[^'\\])\'    { yylval.ival = yytext[1]; return IVAL; } // simplified char
 
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.sval = new std::string(yytext); return IDENT; }
