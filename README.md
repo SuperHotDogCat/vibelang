@@ -1,90 +1,160 @@
 # Novus Programming Language
 
-Novus is a statically typed, LLVM-based language with support for structs, methods, pointers, built-in strings, and C/C++ interoperability.
+Novus is a statically typed, systems-oriented programming language with an LLVM backend. It combines a clean, modern syntax with the power and performance of LLVM, featuring a robust type system, object-oriented constructs, and seamless C interoperability.
+
+## Table of Contents
+- [Features](#features)
+- [Language Specification](#language-specification)
+  - [Basic Types](#basic-types)
+  - [Variables](#variables)
+  - [Functions](#functions)
+  - [Structs and Methods](#structs-and-methods)
+  - [Control Flow](#control-flow)
+  - [Operators](#operators)
+  - [Pointers and Memory](#pointers-and-memory)
+  - [Module System](#module-system)
+- [C Interoperability](#c-interoperability)
+- [Standard Library](#standard-library)
+- [Compilation Guide](#compilation-guide)
+- [Docker Usage](#docker-usage)
 
 ## Features
+- **Statically Typed**: Catch errors at compile-time with a rigorous type system.
+- **LLVM Backend**: Generates optimized IR for x86_64 and ARM64.
+- **Object-Oriented**: Structs and `impl` blocks for data encapsulation and methods.
+- **Memory Control**: First-class support for pointers, arrays, and explicit memory management.
+- **Built-in Strings**: Native `string` type with escape sequence support.
+- **C Interop**: Call any C library function using `extern` and export Novus functions to C.
+- **Module System**: Recursive `import` with support for `NOVUS_PATH`.
 
-- **Types**: `int` (i64), `float` (f64), `bool` (i1), `char` (i8), `string` (i8*), pointers (`T*`), arrays (`T[N]`), and structs.
-- **Functions & Methods**: Support for top-level functions and methods on structs using `impl` blocks.
-- **Control Flow**: `if-else`, `while` loops.
-- **Operators**: `+`, `-`, `*`, `/`, `%`, `<<`, `>>`, `==`, `!=`, `<`, `>`, `<=`, `>=`, `!`, `&` (address-of), `*` (dereference).
-- **Casting**: Explicit casting using `as` keyword (e.g., `ptr as int*`).
-- **Standard Library**: Functional `Vector` and `Set` implementations in `lib/std.nov`.
-- **Module System**: `import` support for multi-file projects.
-- **Error Reporting**: Semantic errors include line and column information.
-- **Interoperability**: Call C/C++ functions and be called from C/C++ via standard calling conventions.
+## Language Specification
 
-## Docker Usage
+### Basic Types
+- `int`: 64-bit signed integer (LLVM `i64`).
+- `float`: 64-bit double-precision floating point (LLVM `double`).
+- `bool`: Boolean type (`true` or `false`).
+- `char`: 8-bit character.
+- `string`: Immutable UTF-8 string (internally `i8*`).
+- `void`: Represents the absence of a value.
 
-A `Dockerfile` is provided to build and run the Novus environment.
-
-```bash
-docker build -t novus .
-docker run -it novus
+### Variables
+Variables are declared using the `var` keyword.
+```rust
+var x: int = 10;
+var pi: float = 3.14159;
+var is_valid: bool = true;
+var msg: string = "Hello, Novus!\n";
 ```
 
-## Syntax Example
-
+### Functions
+Functions are defined using the `fn` keyword.
 ```rust
-import "lib/std.nov";
+fn add(a: int, b: int) -> int {
+    return a + b;
+}
 
-fn main() -> int {
-    printf("Novus language demo\n", 0, 0, 0);
-    return 0;
+fn greet() -> void {
+    printf("Hello!\n");
 }
 ```
 
-## Compiling and Running
+### Structs and Methods
+Structs define data layouts, and `impl` blocks define methods for those structs. Methods always receive a `self` pointer as the first argument.
+```rust
+struct Point {
+    x: int;
+    y: int;
+}
 
-### Building the Compiler
-First, build the `novusc` compiler using `make`:
-```bash
-make
+impl Point {
+    fn init(x: int, y: int) -> void {
+        self.x = x;
+        self.y = y;
+    }
+
+    fn distance_sq() -> int {
+        return self.x * self.x + self.y * self.y;
+    }
+}
 ```
 
-### Compiling a Novus file to an Executable
-To compile a `.nov` file into a standalone executable, follow these three steps:
+### Control Flow
+Supports standard `if-else` and `while` loops.
+```rust
+if (x > 0) {
+    printf("Positive\n");
+} else {
+    printf("Non-positive\n");
+}
 
-1. **Emit LLVM IR**:
-   ```bash
-   ./novusc main.nov
-   ```
-2. **Convert IR to Object File**:
-   ```bash
-   llc-18 main.ll -relocation-model=pic -filetype=obj -o main.o
-   ```
-3. **Link with libc and Create Executable**:
-   ```bash
-   gcc main.o -o main
-   ```
-
-**One-liner command:**
-```bash
-./novusc main.nov && llc-18 main.ll -relocation-model=pic -filetype=obj -o main.o && gcc main.o -o main && ./main
+while (i < 10) {
+    i = i + 1;
+}
 ```
 
-## C/C++ Interoperability
+### Operators
+- **Arithmetic**: `+`, `-`, `*`, `/`, `%`
+- **Relational**: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- **Bitwise**: `<<`, `>>`
+- **Logical**: `!`
+- **Pointer**: `&` (address-of), `*` (dereference)
+
+### Pointers and Memory
+Novus allows low-level memory access and explicit casting.
+```rust
+var p: int*;
+var x: int = 42;
+p = &x;
+var val: int = *p;
+
+// Casting
+var raw: void* = malloc(8);
+var ptr: int* = raw as int*;
+```
+
+### Module System
+Import other Novus files using the `import` statement. The compiler searches in the current directory and directories specified in the `NOVUS_PATH` environment variable.
+```rust
+import "std.nov";
+```
+
+## C Interoperability
 
 ### Calling C from Novus
-Declare the C function in your Novus code without a body:
+Use `extern fn` to declare C functions. Support for variadic functions is included (e.g., `printf`).
 ```rust
-fn printf(fmt: string, a: int, b: int, c: int) -> int;
+extern fn printf(fmt: string, ...) -> int;
+extern fn malloc(size: int) -> void*;
 ```
-Then call it normally.
 
 ### Calling Novus from C
-Compile your Novus code to an object file and link it with your C code:
+Any function defined in Novus uses the standard C calling convention and can be called from C if declared `extern`.
+
+## Standard Library (`lib/std.nov`)
+- `Vector`: Dynamic array with automatic resizing.
+- `HashSet`: Efficient set implementation using hashing.
+- `HashMap`: Key-value store using hashing.
+- Memory: `malloc`, `free`, and `printf` wrappers.
+
+## Compilation Guide
+
+1. **Build the Compiler**:
+   ```bash
+   make
+   ```
+2. **Compile to LLVM IR**:
+   ```bash
+   ./novusc my_program.nov
+   ```
+3. **Compile to Executable**:
+   ```bash
+   llc-18 my_program.ll -relocation-model=pic -filetype=obj -o my_program.o
+   gcc my_program.o -o my_program
+   ```
+
+## Docker Usage
+The provided `Dockerfile` creates a complete development environment with all dependencies.
 ```bash
-./novusc mycode.nov
-llc-18 mycode.ll -relocation-model=pic -filetype=obj -o mycode.o
-gcc main.c mycode.o -o demo
-```
-
-## Project Structure
-
-- `src/`: Compiler source code.
-- `lib/`: Standard library written in Novus.
-- `tests/`: Integration tests and interoperability demos.
-- `Dockerfile`: Containerized build environment.
-- `Makefile`: Build script.
+docker build -t novus .
+docker run -it novus
 ```
