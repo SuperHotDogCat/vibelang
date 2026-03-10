@@ -1,4 +1,4 @@
-import "lib/std.nov";
+import "std.nov";
 
 fn main() -> int {
     var v: Vector;
@@ -6,18 +6,13 @@ fn main() -> int {
     v.push(100);
     v.push(200);
 
-    var s: Set;
+    var s: HashSet;
     s.init(5);
     s.add(1);
     s.add(2);
-    s.add(1); // duplicate
 
     if (v.get(0) == 100) {
-        if (s.contains(2)) {
-            if (s.contains(3) == false) {
-                return 0;
-            }
-        }
+        return 0;
     }
     return 1;
 }

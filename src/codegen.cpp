@@ -13,20 +13,6 @@ CodeGenerator::CodeGenerator() {
 }
 
 void CodeGenerator::generate(Program* program) {
-    // Declare common libc functions
-    if (!module->getFunction("malloc")) {
-        auto* mallocTy = llvm::FunctionType::get(builder->getPtrTy(), {builder->getInt64Ty()}, false);
-        llvm::Function::Create(mallocTy, llvm::Function::ExternalLinkage, "malloc", *module);
-    }
-    if (!module->getFunction("free")) {
-        auto* freeTy = llvm::FunctionType::get(builder->getVoidTy(), {builder->getPtrTy()}, false);
-        llvm::Function::Create(freeTy, llvm::Function::ExternalLinkage, "free", *module);
-    }
-    if (!module->getFunction("printf")) {
-        auto* printfTy = llvm::FunctionType::get(builder->getInt32Ty(), {builder->getPtrTy()}, true);
-        llvm::Function::Create(printfTy, llvm::Function::ExternalLinkage, "printf", *module);
-    }
-
     // First pass: declare structs
     for (auto& decl : program->decls) {
         if (auto* sd = dynamic_cast<StructDecl*>(decl.get())) {
@@ -51,7 +37,7 @@ void CodeGenerator::generate(Program* program) {
             for (auto& param : fd->params) {
                 argTypes.push_back(getLLVMType(param.type.get()));
             }
-            auto* ft = llvm::FunctionType::get(getLLVMType(fd->returnType.get()), argTypes, false);
+            auto* ft = llvm::FunctionType::get(getLLVMType(fd->returnType.get()), argTypes, fd->isVariadic);
             llvm::Function::Create(ft, llvm::Function::ExternalLinkage, fd->name, *module);
         } else if (auto* id = dynamic_cast<ImplDecl*>(decl.get())) {
             for (auto& md : id->methods) {

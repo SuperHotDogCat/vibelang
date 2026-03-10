@@ -31,6 +31,7 @@ extern int yylex();
 "//".*              { /* skip comments */ }
 
 "import"            { return IMPORT; }
+"extern"            { return EXTERN; }
 "struct"            { return STRUCT; }
 "impl"              { return IMPL; }
 "fn"                { return FN; }
@@ -106,6 +107,7 @@ extern int yylex();
 ","                 { return ','; }
 "."                 { return '.'; }
 ":"                 { return ':'; }
+"..."                { return ELLIPSIS; }
 "->"                { return ARROW; }
 
 .                   { std::cerr << "Unknown character: " << yytext << std::endl; }

@@ -15,6 +15,7 @@ public:
 
 private:
     std::map<std::string, std::unique_ptr<Program>> parsedFiles;
+    std::string resolvePath(const std::string& path);
 };
 
 }

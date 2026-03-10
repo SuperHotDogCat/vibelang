@@ -2,12 +2,32 @@
 #include "semantics.h"
 #include "codegen.h"
 #include <iostream>
+#include <vector>
+#include <sstream>
+#include <unistd.h>
 
 extern int yyparse();
 extern FILE* yyin;
 extern std::unique_ptr<novus::Program> root;
 
 namespace novus {
+
+std::string Compiler::resolvePath(const std::string& path) {
+    if (access(path.c_str(), F_OK) == 0) return path;
+
+    const char* envPath = getenv("NOVUS_PATH");
+    if (!envPath) return path;
+
+    std::stringstream ss(envPath);
+    std::string dir;
+    while (std::getline(ss, dir, ':')) {
+        std::string fullPath = dir + "/" + path;
+        if (access(fullPath.c_str(), F_OK) == 0) {
+            return fullPath;
+        }
+    }
+    return path;
+}
 
 std::unique_ptr<Program> Compiler::parseFile(const std::string& filename) {
     FILE* file = fopen(filename.c_str(), "r");
@@ -29,7 +49,7 @@ void Compiler::compile(const std::string& mainFile) {
     // Process imports (recursive)
     std::vector<std::string> toProcess;
     for (auto& imp : mainProgram->imports) {
-        toProcess.push_back(static_cast<ImportStmt*>(imp.get())->path);
+        toProcess.push_back(resolvePath(static_cast<ImportStmt*>(imp.get())->path));
     }
 
     while (!toProcess.empty()) {
@@ -39,7 +59,7 @@ void Compiler::compile(const std::string& mainFile) {
 
         auto prog = parseFile(path);
         for (auto& imp : prog->imports) {
-            toProcess.push_back(static_cast<ImportStmt*>(imp.get())->path);
+            toProcess.push_back(resolvePath(static_cast<ImportStmt*>(imp.get())->path));
         }
         parsedFiles[path] = std::move(prog);
     }

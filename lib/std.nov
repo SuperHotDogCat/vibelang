@@ -1,8 +1,8 @@
 // Novus Standard Library
 
-fn malloc(size: int) -> void*;
-fn free(ptr: void*) -> void;
-fn printf(fmt: string, a: int, b: int, c: int) -> int;
+extern fn malloc(size: int) -> void*;
+extern fn free(ptr: void*) -> void;
+extern fn printf(fmt: string, ...) -> int;
 
 struct Vector {
     data: int*;
@@ -12,14 +12,31 @@ struct Vector {
 
 impl Vector {
     fn init(cap: int) -> void {
-        self.data = malloc(cap * 8) as int*;
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.data = malloc(c * 8) as int*;
         self.size = 0;
-        self.capacity = cap;
+        self.capacity = c;
+    }
+
+    fn resize(new_cap: int) -> void {
+        if (new_cap <= self.capacity) {
+            return;
+        }
+        var new_data: int* = malloc(new_cap * 8) as int*;
+        var i: int = 0;
+        while (i < self.size) {
+            new_data[i] = self.data[i];
+            i = i + 1;
+        }
+        free(self.data as void*);
+        self.data = new_data;
+        self.capacity = new_cap;
     }
 
     fn push(val: int) -> void {
         if (self.size == self.capacity) {
-            return;
+            self.resize(self.capacity * 2);
         }
         self.data[self.size] = val;
         self.size = self.size + 1;
@@ -30,17 +47,34 @@ impl Vector {
     }
 }
 
-struct Set {
+struct HashSet {
     data: int*;
+    used: bool*;
     size: int;
     capacity: int;
 }
 
-impl Set {
+impl HashSet {
     fn init(cap: int) -> void {
-        self.data = malloc(cap * 8) as int*;
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.data = malloc(c * 8) as int*;
+        self.used = malloc(c * 1) as bool*;
         self.size = 0;
-        self.capacity = cap;
+        self.capacity = c;
+        var i: int = 0;
+        while (i < c) {
+            self.used[i] = false;
+            i = i + 1;
+        }
+    }
+
+    fn add(val: int) -> void {
+        if (self.contains(val)) {
+            return;
+        }
+        self.data[self.size] = val;
+        self.size = self.size + 1;
     }
 
     fn contains(val: int) -> bool {
@@ -53,15 +87,47 @@ impl Set {
         }
         return false;
     }
+}
 
-    fn add(val: int) -> void {
-        if (self.contains(val)) {
-            return;
+struct HashMap {
+    keys: int*;
+    values: int*;
+    size: int;
+    capacity: int;
+}
+
+impl HashMap {
+    fn init(cap: int) -> void {
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.keys = malloc(c * 8) as int*;
+        self.values = malloc(c * 8) as int*;
+        self.size = 0;
+        self.capacity = c;
+    }
+
+    fn put(key: int, val: int) -> void {
+        var i: int = 0;
+        while (i < self.size) {
+            if (self.keys[i] == key) {
+                self.values[i] = val;
+                return;
+            }
+            i = i + 1;
         }
-        if (self.size == self.capacity) {
-            return;
-        }
-        self.data[self.size] = val;
+        self.keys[self.size] = key;
+        self.values[self.size] = val;
         self.size = self.size + 1;
+    }
+
+    fn get(key: int) -> int {
+        var i: int = 0;
+        while (i < self.size) {
+            if (self.keys[i] == key) {
+                return self.values[i];
+            }
+            i = i + 1;
+        }
+        return 0;
     }
 }

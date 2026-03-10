@@ -260,6 +260,7 @@ public:
     };
     std::vector<Param> params;
     std::unique_ptr<BlockStmt> body;
+    bool isVariadic = false;
     FunctionDecl(std::shared_ptr<Type> r, const std::string& n, std::vector<Param> p, std::unique_ptr<BlockStmt> b)
         : returnType(r), name(n), params(std::move(p)), body(std::move(b)) {}
 };

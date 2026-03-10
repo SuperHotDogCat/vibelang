@@ -44,13 +44,13 @@ T* setLoc(T* node, const YYLTYPE& loc) {
 %token <ival> IVAL
 %token <fval> FVAL
 %token <sval> SVAL IDENT
-%token IMPORT STRUCT IMPL FN VAR IF ELSE WHILE RETURN TRUE FALSE AS
+%token IMPORT EXTERN STRUCT IMPL FN VAR IF ELSE WHILE RETURN TRUE FALSE AS
 %token VOID INT FLOAT BOOL CHAR STRING
-%token SHL SHR EQ NE LE GE ARROW
+%token SHL SHR EQ NE LE GE ARROW ELLIPSIS
 
 %type <expr> expr primary_expr postfix_expr unary_expr cast_expr mul_expr add_expr shift_expr relational_expr equality_expr
 %type <stmt> stmt expr_stmt var_decl_stmt block_stmt if_stmt while_stmt return_stmt import_stmt
-%type <decl> decl func_decl struct_decl impl_block
+%type <decl> decl func_decl extern_decl struct_decl impl_block
 %type <type> type base_type
 %type <expr_list> arg_list
 %type <stmt_list> stmt_list import_list
@@ -99,8 +99,23 @@ decl_list:
 
 decl:
     func_decl { $$ = $1; }
+    | extern_decl { $$ = $1; }
     | struct_decl { $$ = $1; }
     | impl_block { $$ = $1; }
+    ;
+
+extern_decl:
+    EXTERN FN IDENT '(' param_list ')' ARROW type ';' {
+        auto* fd = new FunctionDecl(std::shared_ptr<Type>($8), *$3, std::move(*$5), nullptr);
+        $$ = setLoc(fd, @1);
+        delete $3; delete $5;
+    }
+    | EXTERN FN IDENT '(' param_list ',' ELLIPSIS ')' ARROW type ';' {
+        auto* fd = new FunctionDecl(std::shared_ptr<Type>($10), *$3, std::move(*$5), nullptr);
+        fd->isVariadic = true;
+        $$ = setLoc(fd, @1);
+        delete $3; delete $5;
+    }
     ;
 
 func_decl:
