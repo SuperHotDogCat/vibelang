@@ -15,6 +15,7 @@ Novus is a statically typed, systems-oriented programming language with an LLVM 
   - [Module System](#module-system)
 - [C Interoperability](#c-interoperability)
 - [Standard Library](#standard-library)
+- [Documentation Index](#documentation-index)
 - [Compilation Guide](#compilation-guide)
 - [Docker Usage](#docker-usage)
 
@@ -135,6 +136,13 @@ Any function defined in Novus uses the standard C calling convention and can be 
 - `HashSet`: Efficient set implementation using hashing.
 - `HashMap`: Key-value store using hashing.
 - Memory: `malloc`, `free`, and `printf` wrappers.
+
+## Documentation Index
+Comprehensive documentation can be found in the `docs/` directory:
+
+- [C Interoperability Internals](docs/interop_internals.md): Technical details on how Novus talks to C.
+- [Module Path Resolution](docs/path_resolution.md): How `import` and `NOVUS_PATH` work.
+- [Programming Guide](docs/programming_guide.md): A guide for developers writing Novus code.
 
 ## Compilation Guide
 
