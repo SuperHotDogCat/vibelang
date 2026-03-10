@@ -1,85 +1,67 @@
 # Novus Programming Language
 
-Novus is a statically typed, LLVM-based language with support for structs, methods, pointers, and built-in strings.
+Novus is a statically typed, LLVM-based language with support for structs, methods, pointers, built-in strings, and C/C++ interoperability.
 
 ## Features
 
-- **Types**: `int`, `float`, `bool`, `char`, `string`, pointers (`T*`), arrays (`T[N]`), and structs.
+- **Types**: `int` (i64), `float` (f64), `bool` (i1), `char` (i8), `string` (i8*), pointers (`T*`), arrays (`T[N]`), and structs.
 - **Functions & Methods**: Support for top-level functions and methods on structs using `impl` blocks.
 - **Control Flow**: `if-else`, `while` loops.
 - **Operators**: `+`, `-`, `*`, `/`, `%`, `<<`, `>>`, `==`, `!=`, `<`, `>`, `<=`, `>=`, `!`, `&` (address-of), `*` (dereference).
-- **Casting**: Explicit casting using `as` keyword (e.g., `ptr as int`).
+- **Casting**: Explicit casting using `as` keyword (e.g., `ptr as int*`).
 - **Standard Library**: Functional `Vector` and `Set` implementations in `lib/std.nov`.
 - **Module System**: `import` support for multi-file projects.
 - **Error Reporting**: Semantic errors include line and column information.
+- **Interoperability**: Call C/C++ functions and be called from C/C++ via standard calling conventions.
+
+## Docker Usage
+
+A `Dockerfile` is provided to build and run the Novus environment.
+
+```bash
+docker build -t novus .
+docker run -it novus
+```
 
 ## Syntax Example
 
 ```rust
 import "lib/std.nov";
 
-struct Point {
-    x: int;
-    y: int;
-}
-
-impl Point {
-    fn set(x: int, y: int) -> void {
-        self.x = x;
-        self.y = y;
-    }
-
-    fn area() -> int {
-        return self.x * self.y;
-    }
-}
-
 fn main() -> int {
-    var p: Point;
-    p.set(10, 20);
-
-    var msg: string = "Area calculated: ";
-    // print(msg); // if print was implemented
-
-    return p.area();
+    printf("Novus language demo\n", 0, 0, 0);
+    return 0;
 }
 ```
 
-## Building
+## C/C++ Interoperability
 
-To build the compiler:
+### Calling C from Novus
+Declare the C function in your Novus code without a body:
+```rust
+fn printf(fmt: string, a: int, b: int, c: int) -> int;
+```
+Then call it normally.
+
+### Calling Novus from C
+Compile your Novus code to an object file and link it with your C code:
+```bash
+./novusc mycode.nov
+llc-18 mycode.ll -relocation-model=pic -filetype=obj -o mycode.o
+gcc main.c mycode.o -o demo
+```
+
+## Building the Compiler
+
 ```bash
 make
-```
-
-To compile a Novus program:
-```bash
-./novusc tests/test_lib.nov
-```
-This generates `tests/test_lib.ll`.
-
-To generate assembly for different architectures:
-
-**x86_64:**
-```bash
-llc-18 tests/test_lib.ll -o test.s
-```
-
-**ARM64:**
-```bash
-llc-18 tests/test_lib.ll -march=aarch64 -o test_arm.s
 ```
 
 ## Project Structure
 
 - `src/`: Compiler source code.
-    - `lexer.l`: Tokenization (Flex).
-    - `parser.y`: Grammar and AST construction (Bison).
-    - `ast.h`: AST node definitions.
-    - `semantics.cpp`: Type checking and symbol management.
-    - `codegen.cpp`: LLVM IR generation.
-    - `compiler.cpp`: Driver for multi-file compilation.
 - `lib/`: Standard library written in Novus.
-- `tests/`: Integration tests.
+- `tests/`: Integration tests and interoperability demos.
+- `Dockerfile`: Containerized build environment.
 - `Makefile`: Build script.
 ```

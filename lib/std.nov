@@ -1,6 +1,8 @@
 // Novus Standard Library
 
-fn malloc(size: int) -> void* {}
+fn malloc(size: int) -> void*;
+fn free(ptr: void*) -> void;
+fn printf(fmt: string, a: int, b: int, c: int) -> int;
 
 struct Vector {
     data: int*;

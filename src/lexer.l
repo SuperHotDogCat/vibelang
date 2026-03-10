@@ -48,6 +48,7 @@ extern int yylex();
 "float"             { return FLOAT; }
 "bool"              { return BOOL; }
 "char"              { return CHAR; }
+"string"            { return STRING; }
 
 [0-9]+\.[0-9]+      { yylval.fval = atof(yytext); return FVAL; }
 [0-9]+              { yylval.ival = atoll(yytext); return IVAL; }

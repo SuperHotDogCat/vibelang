@@ -13,10 +13,18 @@ CodeGenerator::CodeGenerator() {
 }
 
 void CodeGenerator::generate(Program* program) {
-    // Declare malloc
+    // Declare common libc functions
     if (!module->getFunction("malloc")) {
         auto* mallocTy = llvm::FunctionType::get(builder->getPtrTy(), {builder->getInt64Ty()}, false);
         llvm::Function::Create(mallocTy, llvm::Function::ExternalLinkage, "malloc", *module);
+    }
+    if (!module->getFunction("free")) {
+        auto* freeTy = llvm::FunctionType::get(builder->getVoidTy(), {builder->getPtrTy()}, false);
+        llvm::Function::Create(freeTy, llvm::Function::ExternalLinkage, "free", *module);
+    }
+    if (!module->getFunction("printf")) {
+        auto* printfTy = llvm::FunctionType::get(builder->getInt32Ty(), {builder->getPtrTy()}, true);
+        llvm::Function::Create(printfTy, llvm::Function::ExternalLinkage, "printf", *module);
     }
 
     // First pass: declare structs

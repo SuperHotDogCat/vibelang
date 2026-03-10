@@ -1,0 +1,15 @@
+import "lib/std.nov";
+
+fn greet(name: string) -> void {
+}
+
+fn add_numbers(a: int, b: int) -> int {
+    return a + b;
+}
+
+fn novus_main() -> int {
+    greet("Developer");
+    var res: int = add_numbers(5, 7);
+    printf("Result: %d\n", res, 0, 0);
+    return 0;
+}
