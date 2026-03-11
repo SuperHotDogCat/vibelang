@@ -7,6 +7,8 @@ YACC = bison
 OBJS = src/lexer.yy.o src/parser.tab.o src/semantics.o src/codegen.o src/compiler.o src/main.o
 TARGET = novusc
 
+PREFIX ?= /usr/local
+
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
@@ -20,6 +22,13 @@ src/parser.tab.cpp src/parser.tab.hpp: src/parser.y
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+install: $(TARGET)
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install -m 755 $(TARGET) $(DESTDIR)$(PREFIX)/bin
+	install -m 755 bin/novum $(DESTDIR)$(PREFIX)/bin
+	install -d $(DESTDIR)$(PREFIX)/lib/novus
+	install -m 644 lib/std.nov $(DESTDIR)$(PREFIX)/lib/novus
 
 clean:
 	rm -f src/*.o src/*.yy.cpp src/*.tab.cpp src/*.tab.hpp $(TARGET)
