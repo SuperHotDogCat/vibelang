@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
+import argparse
+
+def init_project(name):
+    os.makedirs(f"{name}/src", exist_ok=True)
+    os.makedirs(f"{name}/lib", exist_ok=True)
+
+    with open(f"{name}/Project.toml", "w") as f:
+        f.write(f'[project]\nname = "{name}"\nversion = "0.1.0"\nmain = "src/main.nov"\n')
+
+    with open(f"{name}/src/main.nov", "w") as f:
+        f.write('import "std.nov";\n\nfn main() -> int {\n    printf("Hello from Novus project: %s!\\n", "' + name + '");\n    return 0;\n}\n')
+
+    print(f"Initialized Novus project in {name}/")
+
+def build_project():
+    if not os.path.exists("Project.toml"):
+        print("Error: Project.toml not found")
+        sys.exit(1)
+
+    # Simple parser for Project.toml
+    config = {}
+    with open("Project.toml", "r") as f:
+        for line in f:
+            if "=" in line:
+                k, v = line.split("=")
+                config[k.strip()] = v.strip().strip('"')
+
+    name = config.get("name", "app")
+    main_file = config.get("main", "src/main.nov")
+
+    os.makedirs("build", exist_ok=True)
+
+    # Path to compiler
+    novusc = os.environ.get("NOVUSC", "./novusc")
+    if not os.path.exists(novusc) and not os.path.isabs(novusc):
+        # Try to find it in the same directory as this script or parent
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        novusc = os.path.join(script_dir, "../novusc")
+
+    print(f"Compiling {main_file}...")
+    # Set NOVUS_PATH to include lib/ and project root
+    env = os.environ.copy()
+    lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../lib"))
+    env["NOVUS_PATH"] = f"{lib_path}:.:./lib"
+
+    try:
+        subprocess.run([novusc, main_file], check=True, env=env)
+
+        ll_file = main_file.replace(".nov", ".ll")
+        obj_file = f"build/{name}.o"
+        bin_file = f"build/{name}"
+
+        print("Generating object file...")
+        subprocess.run(["llc-18", ll_file, "-relocation-model=pic", "-filetype=obj", "-o", obj_file], check=True)
+
+        print("Linking...")
+        subprocess.run(["gcc", obj_file, "-o", bin_file], check=True)
+
+        # Cleanup .ll
+        os.remove(ll_file)
+
+        print(f"Build successful: {bin_file}")
+        return bin_file
+    except subprocess.CalledProcessError as e:
+        print(f"Build failed: {e}")
+        sys.exit(1)
+
+def run_project():
+    bin_file = build_project()
+    print(f"Running {bin_file}...\n")
+    subprocess.run([f"./{bin_file}"])
+
+def main():
+    parser = argparse.ArgumentParser(description="Novum: Novus Project Manager")
+    subparsers = parser.add_subparsers(dest="command")
+
+    init_parser = subparsers.add_parser("init")
+    init_parser.add_argument("name")
+
+    build_parser = subparsers.add_parser("build")
+    run_parser = subparsers.add_parser("run")
+
+    args = parser.parse_args()
+
+    if args.command == "init":
+        init_project(args.name)
+    elif args.command == "build":
+        build_project()
+    elif args.command == "run":
+        run_project()
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()

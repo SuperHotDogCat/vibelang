@@ -293,12 +293,50 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
         for (auto& arg : ce->args) args.push_back(codegenExpr(arg.get()));
         return builder->CreateCall(func, args);
     } else if (auto* ma = dynamic_cast<MemberAccessExpr*>(expr)) {
-        auto* obj = codegenExpr(ma->object.get());
+        llvm::Value* objPtr = nullptr;
+
+        // We need the address of the object
+        if (auto* ve = dynamic_cast<VariableExpr*>(ma->object.get())) {
+            objPtr = namedValues[ve->name];
+            if (ve->evaluatedType->kind == TypeKind::Pointer) {
+                 objPtr = builder->CreateLoad(builder->getPtrTy(), objPtr);
+            }
+        } else if (auto* pma = dynamic_cast<MemberAccessExpr*>(ma->object.get())) {
+             // Nested member access
+             auto* baseObj = codegenExpr(pma->object.get()); // address of base or the pointer itself
+             // This logic is complex. For now let's simplify:
+             // If we always want the address:
+             llvm::Value* baseAddr;
+             if (dynamic_cast<VariableExpr*>(pma->object.get())) baseAddr = namedValues[static_cast<VariableExpr*>(pma->object.get())->name];
+             else baseAddr = codegenExpr(pma->object.get());
+
+             auto stype = pma->object->evaluatedType;
+             if (stype->kind == TypeKind::Pointer) {
+                  stype = static_cast<PointerType*>(stype.get())->base;
+                  if (dynamic_cast<VariableExpr*>(pma->object.get())) baseAddr = builder->CreateLoad(builder->getPtrTy(), baseAddr);
+             }
+             auto sname = static_cast<StructType*>(stype.get())->name;
+             int idx = structFieldIndices[sname][pma->member];
+             objPtr = builder->CreateStructGEP(structTypes[sname], baseAddr, idx);
+             if (pma->evaluatedType->kind == TypeKind::Pointer) {
+                  objPtr = builder->CreateLoad(builder->getPtrTy(), objPtr);
+             }
+        } else {
+             objPtr = codegenExpr(ma->object.get());
+        }
+
         auto structType = ma->object->evaluatedType;
-        if (structType->kind == TypeKind::Pointer) structType = static_cast<PointerType*>(structType.get())->base;
+        bool isPtrType = structType->kind == TypeKind::Pointer;
+        if (isPtrType) {
+            structType = static_cast<PointerType*>(structType.get())->base;
+            // objPtr is already the pointer value (the address of the struct)
+        } else {
+            // objPtr is the address of the local struct (alloca)
+        }
+
         auto structName = static_cast<StructType*>(structType.get())->name;
         int idx = structFieldIndices[structName][ma->member];
-        auto* ptr = builder->CreateStructGEP(structTypes[structName], obj, idx);
+        auto* ptr = builder->CreateStructGEP(structTypes[structName], objPtr, idx);
         return builder->CreateLoad(getLLVMType(ma->evaluatedType.get()), ptr, ma->member);
     } else if (auto* mc = dynamic_cast<MethodCallExpr*>(expr)) {
         auto structType = mc->object->evaluatedType;

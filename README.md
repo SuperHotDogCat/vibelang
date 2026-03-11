@@ -13,6 +13,7 @@ Novus is a statically typed, systems-oriented programming language with an LLVM 
   - [Operators](#operators)
   - [Pointers and Memory](#pointers-and-memory)
   - [Module System](#module-system)
+- [Project Management with Novum](#project-management-with-novum)
 - [C Interoperability](#c-interoperability)
 - [Standard Library](#standard-library)
 - [Documentation Index](#documentation-index)
@@ -131,6 +132,19 @@ extern fn malloc(size: int) -> void*;
 ### Calling Novus from C
 Any function defined in Novus uses the standard C calling convention and can be called from C if declared `extern`.
 
+## Project Management with Novum
+`novum` is the primary tool for managing Novus projects. It handles scaffolding, building, and running your code.
+
+```bash
+# Create a new project
+./bin/novum init my_app
+cd my_app
+
+# Build and run
+../bin/novum run
+```
+See [Novum Tool Guide](docs/novum_tool.md) for more details.
+
 ## Standard Library (`lib/std.nov`)
 - `Vector`: Dynamic array with automatic resizing.
 - `HashSet`: Efficient set implementation using hashing.
@@ -142,6 +156,7 @@ Comprehensive documentation can be found in the `docs/` directory:
 
 - [C Interoperability Internals](docs/interop_internals.md): Technical details on how Novus talks to C.
 - [Module Path Resolution](docs/path_resolution.md): How `import` and `NOVUS_PATH` work.
+- [Novum Tool Guide](docs/novum_tool.md): Usage of the project management tool.
 - [Programming Guide](docs/programming_guide.md): A guide for developers writing Novus code.
 
 ## Compilation Guide
