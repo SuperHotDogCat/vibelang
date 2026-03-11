@@ -17,7 +17,7 @@ We are proud to announce the initial stable release of the **Novus Programming L
 ### 📦 Ecosystem & Tooling
 - **`novum` Project Manager**: A unified tool for scaffolding (`init`), building (`build`), and executing (`run`) projects.
 - **Robust Module System**: Recursive `import` with intelligent path resolution (supporting `NOVUS_PATH`).
-- **Standard Library**: Functional implementations of `Vector` (dynamic resizing), `HashSet`, `HashMap`, and `Stack`.
+- **Advanced Standard Library**: Functional implementations of `Vector` (dynamic resizing), `HashSet`, `HashMap`, `Queue`, `Deque`, `Stack`, and `PriorityQueue`.
 - **Docker Support**: Containerized build environment for reproducible development across architectures.
 
 ### 🔗 C Interoperability
@@ -25,6 +25,7 @@ We are proud to announce the initial stable release of the **Novus Programming L
 - **Seamless Integration**: Novus functions follow standard calling conventions, allowing them to be linked and called from C/C++ projects.
 
 ## Recent Improvements
+- **Robust Hashing**: Added native hashing for `int`, `float`, and `string`.
 - **Improved Module Resolution**: Imports are now resolved relative to the importing file.
 - **Enhanced Syntax**: Added support for C-style declarations (`int x = 1;`) at both global and local scopes.
 - **Precise Error Reporting**: Semantic errors now include exact line and column information.

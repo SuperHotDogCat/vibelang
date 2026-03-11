@@ -397,8 +397,20 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
     } else if (auto* c = dynamic_cast<CastExpr*>(expr)) {
         auto* val = codegenExpr(c->expr.get());
         auto* targetTy = getLLVMType(c->targetType.get());
-        if (val->getType()->isPointerTy() && targetTy->isIntegerTy()) return builder->CreatePtrToInt(val, targetTy);
-        if (val->getType()->isIntegerTy() && targetTy->isPointerTy()) return builder->CreateIntToPtr(val, targetTy);
+        auto* sourceTy = val->getType();
+
+        if (sourceTy == targetTy) return val;
+
+        if (sourceTy->isPointerTy() && targetTy->isIntegerTy()) return builder->CreatePtrToInt(val, targetTy);
+        if (sourceTy->isIntegerTy() && targetTy->isPointerTy()) return builder->CreateIntToPtr(val, targetTy);
+        if (sourceTy->isIntegerTy() && targetTy->isIntegerTy()) {
+            if (sourceTy->getIntegerBitWidth() < targetTy->getIntegerBitWidth())
+                return builder->CreateSExt(val, targetTy);
+            return builder->CreateTrunc(val, targetTy);
+        }
+        if (sourceTy->isFloatingPointTy() && targetTy->isIntegerTy()) return builder->CreateFPToSI(val, targetTy);
+        if (sourceTy->isIntegerTy() && targetTy->isFloatingPointTy()) return builder->CreateSIToFP(val, targetTy);
+
         return builder->CreateBitCast(val, targetTy);
     }
     return nullptr;

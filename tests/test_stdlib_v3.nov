@@ -1,0 +1,59 @@
+import "std.nov";
+
+fn main() -> int {
+    printf("Testing Extended Stdlib...\n");
+
+    // Queue test
+    var q: Queue;
+    q.init(5);
+    q.push(10);
+    q.push(20);
+    if (q.pop() == 10) {
+        printf("Queue test passed\n");
+    }
+
+    // PriorityQueue test
+    var pq: PriorityQueue;
+    pq.init(10);
+    pq.push(30);
+    pq.push(10);
+    pq.push(50);
+    pq.push(20);
+    if (pq.pop() == 50) {
+        if (pq.pop() == 30) {
+            printf("PriorityQueue test passed\n");
+        }
+    }
+
+    // Deque test
+    var dq: Deque;
+    dq.init(5);
+    dq.push_front(1);
+    dq.push_back(2);
+    if (dq.pop_front() == 1) {
+        if (dq.pop_back() == 2) {
+            printf("Deque test passed\n");
+        }
+
+    // HashSet test
+    var s: HashSet;
+    s.init(10);
+    s.add(100);
+    s.add(200);
+    if (s.contains(100)) {
+        if (s.contains(300) == false) {
+             printf("HashSet test passed\n");
+        }
+    }
+
+    // HashMap test
+    var m: HashMap;
+    m.init(10);
+    m.put(1, 100);
+    if (m.get(1) == 100) {
+        printf("HashMap test passed\n");
+    }
+
+    return 0;
+    }
+}

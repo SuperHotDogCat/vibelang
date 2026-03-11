@@ -3,6 +3,38 @@
 extern fn malloc(size: int) -> void*;
 extern fn free(ptr: void*) -> void;
 extern fn printf(fmt: string, ...) -> int;
+extern fn strlen(s: string) -> int;
+
+// Hashing Utilities
+
+fn hash_int(val: int) -> int {
+    var x: int = val;
+    // x = ((x >> 30) ^ x) * 123456789; // hex literals might be causing issue
+    x = (x >> 30);
+    x = x + val;
+    if (x < 0) { x = -x; }
+    return x;
+}
+
+fn hash_float(val: float) -> int {
+    var i: int = val as int;
+    return hash_int(i);
+}
+
+fn hash_string(val: string) -> int {
+    var h: int = 5381;
+    var len: int = strlen(val);
+    var i: int = 0;
+    var p: char* = val as char*;
+    while (i < len) {
+        h = ((h << 5) + h) + (p[i] as int);
+        i = i + 1;
+    }
+    if (h < 0) { h = -h; }
+    return h;
+}
+
+// Data Structures
 
 struct Vector {
     data: int*;
@@ -57,7 +89,7 @@ struct HashSet {
 impl HashSet {
     fn init(cap: int) -> void {
         var c: int = cap;
-        if (c <= 0) { c = 10; }
+        if (c <= 0) { c = 16; }
         self.data = malloc(c * 8) as int*;
         self.used = malloc(c * 1) as bool*;
         self.size = 0;
@@ -73,17 +105,26 @@ impl HashSet {
         if (self.contains(val)) {
             return;
         }
-        self.data[self.size] = val;
+        var h: int = hash_int(val) % self.capacity;
+        while (self.used[h]) {
+            h = (h + 1) % self.capacity;
+        }
+        self.data[h] = val;
+        self.used[h] = true;
         self.size = self.size + 1;
     }
 
     fn contains(val: int) -> bool {
-        var i: int = 0;
-        while (i < self.size) {
-            if (self.data[i] == val) {
+        var h: int = hash_int(val) % self.capacity;
+        var start: int = h;
+        while (self.used[h]) {
+            if (self.data[h] == val) {
                 return true;
             }
-            i = i + 1;
+            h = (h + 1) % self.capacity;
+            if (h == start) {
+                return false;
+            }
         }
         return false;
     }
@@ -92,6 +133,7 @@ impl HashSet {
 struct HashMap {
     keys: int*;
     values: int*;
+    used: bool*;
     size: int;
     capacity: int;
 }
@@ -99,34 +141,45 @@ struct HashMap {
 impl HashMap {
     fn init(cap: int) -> void {
         var c: int = cap;
-        if (c <= 0) { c = 10; }
+        if (c <= 0) { c = 16; }
         self.keys = malloc(c * 8) as int*;
         self.values = malloc(c * 8) as int*;
+        self.used = malloc(c * 1) as bool*;
         self.size = 0;
         self.capacity = c;
+        var i: int = 0;
+        while (i < c) {
+            self.used[i] = false;
+            i = i + 1;
+        }
     }
 
     fn put(key: int, val: int) -> void {
-        var i: int = 0;
-        while (i < self.size) {
-            if (self.keys[i] == key) {
-                self.values[i] = val;
+        var h: int = hash_int(key) % self.capacity;
+        while (self.used[h]) {
+            if (self.keys[h] == key) {
+                self.values[h] = val;
                 return;
             }
-            i = i + 1;
+            h = (h + 1) % self.capacity;
         }
-        self.keys[self.size] = key;
-        self.values[self.size] = val;
+        self.keys[h] = key;
+        self.values[h] = val;
+        self.used[h] = true;
         self.size = self.size + 1;
     }
 
     fn get(key: int) -> int {
-        var i: int = 0;
-        while (i < self.size) {
-            if (self.keys[i] == key) {
-                return self.values[i];
+        var h: int = hash_int(key) % self.capacity;
+        var start: int = h;
+        while (self.used[h]) {
+            if (self.keys[h] == key) {
+                return self.values[h];
             }
-            i = i + 1;
+            h = (h + 1) % self.capacity;
+            if (h == start) {
+                return 0;
+            }
         }
         return 0;
     }
@@ -140,10 +193,11 @@ struct Stack {
 
 impl Stack {
     fn init(cap: int) -> void {
-        if (cap <= 0) { cap = 10; }
-        self.data = malloc(cap * 8) as int*;
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.data = malloc(c * 8) as int*;
         self.size = 0;
-        self.capacity = cap;
+        self.capacity = c;
     }
 
     fn push(val: int) -> void {
@@ -171,5 +225,158 @@ impl Stack {
 
     fn is_empty() -> bool {
         return self.size == 0;
+    }
+}
+
+struct Queue {
+    data: int*;
+    front: int;
+    rear: int;
+    size: int;
+    capacity: int;
+}
+
+impl Queue {
+    fn init(cap: int) -> void {
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.data = malloc(c * 8) as int*;
+        self.front = 0;
+        self.rear = 0;
+        self.size = 0;
+        self.capacity = c;
+    }
+
+    fn push(val: int) -> void {
+        if (self.size == self.capacity) { return; }
+        self.data[self.rear] = val;
+        self.rear = (self.rear + 1) % self.capacity;
+        self.size = self.size + 1;
+    }
+
+    fn pop() -> int {
+        if (self.size == 0) { return 0; }
+        var val: int = self.data[self.front];
+        self.front = (self.front + 1) % self.capacity;
+        self.size = self.size - 1;
+        return val;
+    }
+
+    fn is_empty() -> bool { return self.size == 0; }
+}
+
+struct Deque {
+    data: int*;
+    front: int;
+    rear: int;
+    size: int;
+    capacity: int;
+}
+
+impl Deque {
+    fn init(cap: int) -> void {
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.data = malloc(c * 8) as int*;
+        self.front = 0;
+        self.rear = 0;
+        self.size = 0;
+        self.capacity = c;
+    }
+
+    fn push_back(val: int) -> void {
+        if (self.size == self.capacity) { return; }
+        self.data[self.rear] = val;
+        self.rear = (self.rear + 1) % self.capacity;
+        self.size = self.size + 1;
+    }
+
+    fn push_front(val: int) -> void {
+        if (self.size == self.capacity) { return; }
+        self.front = (self.front - 1 + self.capacity) % self.capacity;
+        self.data[self.front] = val;
+        self.size = self.size + 1;
+    }
+
+    fn pop_front() -> int {
+        if (self.size == 0) { return 0; }
+        var val: int = self.data[self.front];
+        self.front = (self.front + 1) % self.capacity;
+        self.size = self.size - 1;
+        return val;
+    }
+
+    fn pop_back() -> int {
+        if (self.size == 0) { return 0; }
+        self.rear = (self.rear - 1 + self.capacity) % self.capacity;
+        var val: int = self.data[self.rear];
+        self.size = self.size - 1;
+        return val;
+    }
+}
+
+struct PriorityQueue {
+    data: int*;
+    size: int;
+    capacity: int;
+}
+
+impl PriorityQueue {
+    fn init(cap: int) -> void {
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.data = malloc(c * 8) as int*;
+        self.size = 0;
+        self.capacity = c;
+    }
+
+    fn push(val: int) -> void {
+        if (self.size == self.capacity) { return; }
+        self.data[self.size] = val;
+        var curr: int = self.size;
+        self.size = self.size + 1;
+
+        while (curr > 0) {
+            var parent: int = (curr - 1) / 2;
+            if (self.data[curr] > self.data[parent]) {
+                var tmp: int = self.data[curr];
+                self.data[curr] = self.data[parent];
+                self.data[parent] = tmp;
+                curr = parent;
+            } else {
+                return;
+            }
+        }
+    }
+
+    fn pop() -> int {
+        if (self.size == 0) { return 0; }
+        var top: int = self.data[0];
+        self.size = self.size - 1;
+        self.data[0] = self.data[self.size];
+
+        var curr: int = 0;
+        while (true) {
+            var left: int = 2 * curr + 1;
+            var right: int = 2 * curr + 2;
+            var largest: int = curr;
+
+            if (left < self.size) {
+                if (self.data[left] > self.data[largest]) { largest = left; }
+            }
+            if (right < self.size) {
+                if (self.data[right] > self.data[largest]) { largest = right; }
+            }
+
+            if (largest != curr) {
+                var tmp: int = self.data[curr];
+                self.data[curr] = self.data[largest];
+                self.data[largest] = tmp;
+                curr = largest;
+            } else {
+                return top;
+            }
+        }
+        return top;
     }
 }

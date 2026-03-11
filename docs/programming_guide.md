@@ -74,12 +74,27 @@ var x: int = v.get(0);
 ```
 
 ### HashSet and HashMap
-Efficient collections using open-addressing hashing.
+Efficient collections using open-addressing hashing with linear probing.
 
 ```rust
 var map: HashMap;
-map.init(10);
+map.init(16);
 map.put(1, 100);
+var val: int = map.get(1);
+```
+
+### Queue, Deque, and PriorityQueue
+Additional data structures for various use cases:
+
+- **Queue**: FIFO queue using a circular buffer.
+- **Deque**: Double-ended queue.
+- **PriorityQueue**: Max-heap implementation for prioritized processing.
+
+```rust
+var pq: PriorityQueue;
+pq.init(10);
+pq.push(50);
+var top: int = pq.pop();
 ```
 
 ## 6. Debugging Tips
