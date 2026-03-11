@@ -102,6 +102,7 @@ decl:
     | extern_decl { $$ = $1; }
     | struct_decl { $$ = $1; }
     | impl_block { $$ = $1; }
+    | var_decl_stmt { $$ = new GlobalVarDecl(std::unique_ptr<VarDeclStmt>(static_cast<VarDeclStmt*>($1))); }
     ;
 
 extern_decl:
@@ -196,6 +197,8 @@ expr_stmt:
 var_decl_stmt:
     VAR IDENT ':' type ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($4), *$2), @1); delete $2; }
     | VAR IDENT ':' type '=' expr ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($4), *$2, std::unique_ptr<Expr>($6)), @1); delete $2; }
+    | base_type IDENT '=' expr ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($1), *$2, std::unique_ptr<Expr>($4)), @2); delete $2; }
+    | base_type IDENT ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($1), *$2), @2); delete $2; }
     ;
 
 block_stmt:

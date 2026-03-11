@@ -85,7 +85,23 @@ llvm::Type* CodeGenerator::getLLVMType(Type* type) {
 }
 
 void CodeGenerator::codegenDecl(Decl* decl) {
-    if (auto* fd = dynamic_cast<FunctionDecl*>(decl)) {
+    if (auto* gv = dynamic_cast<GlobalVarDecl*>(decl)) {
+        auto* type = getLLVMType(gv->varDecl->type.get());
+        auto* gVar = new llvm::GlobalVariable(*module, type, false, llvm::GlobalValue::ExternalLinkage, nullptr, gv->varDecl->name);
+        if (gv->varDecl->init) {
+             // For simplicity, only support constant init for globals for now
+             if (auto* il = dynamic_cast<IntLiteral*>(gv->varDecl->init.get())) {
+                 gVar->setInitializer(builder->getInt64(il->value));
+             } else if (auto* fl = dynamic_cast<FloatLiteral*>(gv->varDecl->init.get())) {
+                 gVar->setInitializer(llvm::ConstantFP::get(*context, llvm::APFloat(fl->value)));
+             } else if (auto* bl = dynamic_cast<BoolLiteral*>(gv->varDecl->init.get())) {
+                 gVar->setInitializer(builder->getInt1(bl->value));
+             }
+        } else {
+             gVar->setInitializer(llvm::Constant::getNullValue(type));
+        }
+        namedValues[gv->varDecl->name] = gVar;
+    } else if (auto* fd = dynamic_cast<FunctionDecl*>(decl)) {
         if (!fd->body) return; // External function
         auto* func = module->getFunction(fd->name);
         currentFunction = func;
@@ -230,12 +246,16 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
         return builder->CreateGlobalStringPtr(sl->value);
     } else if (auto* ve = dynamic_cast<VariableExpr*>(expr)) {
         auto* v = namedValues[ve->name];
+        if (!v) {
+            v = module->getGlobalVariable(ve->name);
+        }
         return builder->CreateLoad(getLLVMType(ve->evaluatedType.get()), v, ve->name);
     } else if (auto* be = dynamic_cast<BinaryExpr*>(expr)) {
         if (be->op == "=") {
             llvm::Value* ptr = nullptr;
             if (auto* vve = dynamic_cast<VariableExpr*>(be->left.get())) {
                 ptr = namedValues[vve->name];
+                if (!ptr) ptr = module->getGlobalVariable(vve->name);
             } else if (auto* ma = dynamic_cast<MemberAccessExpr*>(be->left.get())) {
                 auto* obj = codegenExpr(ma->object.get());
                 llvm::Value* structPtr = obj;

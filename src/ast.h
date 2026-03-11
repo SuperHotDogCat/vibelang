@@ -265,6 +265,14 @@ public:
         : returnType(r), name(n), params(std::move(p)), body(std::move(b)) {}
 };
 
+class VarDeclStmt;
+
+class GlobalVarDecl : public Decl {
+public:
+    std::unique_ptr<VarDeclStmt> varDecl;
+    GlobalVarDecl(std::unique_ptr<VarDeclStmt> v) : varDecl(std::move(v)) {}
+};
+
 class StructDecl : public Decl {
 public:
     std::string name;

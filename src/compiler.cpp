@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <unistd.h>
+#include <libgen.h>
 
 extern int yyparse();
 extern FILE* yyin;
@@ -12,8 +13,13 @@ extern std::unique_ptr<novus::Program> root;
 
 namespace novus {
 
-std::string Compiler::resolvePath(const std::string& path) {
+std::string Compiler::resolvePath(const std::string& path, const std::string& currentFileDir) {
     if (access(path.c_str(), F_OK) == 0) return path;
+
+    if (!currentFileDir.empty()) {
+        std::string localPath = currentFileDir + "/" + path;
+        if (access(localPath.c_str(), F_OK) == 0) return localPath;
+    }
 
     const char* envPath = getenv("NOVUS_PATH");
     if (!envPath) return path;
@@ -43,25 +49,36 @@ std::unique_ptr<Program> Compiler::parseFile(const std::string& filename) {
     return std::move(root);
 }
 
+static std::string getDir(const std::string& path) {
+    char* cpath = strdup(path.c_str());
+    std::string dir = dirname(cpath);
+    free(cpath);
+    return dir;
+}
+
 void Compiler::compile(const std::string& mainFile) {
     auto mainProgram = parseFile(mainFile);
+    std::string mainDir = getDir(mainFile);
 
     // Process imports (recursive)
-    std::vector<std::string> toProcess;
+    std::vector<std::pair<std::string, std::string>> toProcess;
     for (auto& imp : mainProgram->imports) {
-        toProcess.push_back(resolvePath(static_cast<ImportStmt*>(imp.get())->path));
+        toProcess.push_back({static_cast<ImportStmt*>(imp.get())->path, mainDir});
     }
 
     while (!toProcess.empty()) {
-        std::string path = toProcess.back();
+        auto item = toProcess.back();
         toProcess.pop_back();
-        if (parsedFiles.count(path)) continue;
+        std::string fullPath = resolvePath(item.first, item.second);
 
-        auto prog = parseFile(path);
+        if (parsedFiles.count(fullPath)) continue;
+
+        auto prog = parseFile(fullPath);
+        std::string currentDir = getDir(fullPath);
         for (auto& imp : prog->imports) {
-            toProcess.push_back(resolvePath(static_cast<ImportStmt*>(imp.get())->path));
+            toProcess.push_back({static_cast<ImportStmt*>(imp.get())->path, currentDir});
         }
-        parsedFiles[path] = std::move(prog);
+        parsedFiles[fullPath] = std::move(prog);
     }
 
     SemanticAnalyzer analyzer;

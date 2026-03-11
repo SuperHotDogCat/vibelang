@@ -48,6 +48,8 @@ void SemanticAnalyzer::collectDecls(Program* program) {
             for (auto& md : id->methods) {
                 methods[id->structName][md->funcDecl->name] = md.get();
             }
+        } else if (auto* gv = dynamic_cast<GlobalVarDecl*>(decl.get())) {
+            symbolTable.define(gv->varDecl->name, gv->varDecl->type);
         }
     }
 }
@@ -59,7 +61,9 @@ void SemanticAnalyzer::analyzeOnly(Program* program) {
 }
 
 void SemanticAnalyzer::visitDecl(Decl* decl) {
-    if (auto* fd = dynamic_cast<FunctionDecl*>(decl)) {
+    if (auto* gv = dynamic_cast<GlobalVarDecl*>(decl)) {
+        visitStmt(gv->varDecl.get());
+    } else if (auto* fd = dynamic_cast<FunctionDecl*>(decl)) {
         if (!fd->body) return;
         symbolTable.pushScope();
         currentReturnType = fd->returnType;
