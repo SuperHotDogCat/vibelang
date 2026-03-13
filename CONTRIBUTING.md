@@ -39,7 +39,14 @@ Always run the full test suite before submitting changes:
 Create a `.nov` file in the `tests/` directory. If the test should pass, ensure it returns `0` from the `main` function. The `run_tests.sh` script automatically detects and executes all `.nov` files in the `tests/` folder.
 
 ## Generics Implementation
-Novus uses **monomorphization**. When a generic struct is used with concrete types, the `SemanticAnalyzer` clones the AST of the struct and its methods, substituting type parameters with concrete types. These specialized declarations are then added to the program for code generation.
+Novus uses **monomorphization**. When a generic struct or function is used with concrete types, the `SemanticAnalyzer::instantiateStruct` (and related logic) handles the specialization:
+
+1.  **Mangling**: A unique name is generated based on the base name and type arguments (e.g., `Box_int`).
+2.  **Cloning**: The AST of the generic template is cloned.
+3.  **Substitution**: Type parameters (e.g., `@T`) are replaced with concrete types.
+4.  **Registration**: The specialized declarations are added to `Program::decls`.
+5.  **Validation**: The specialized code is re-analyzed to ensure type safety.
+6.  **Code Generation**: The `CodeGenerator` produces optimized LLVM IR for each specialization.
 
 ## Coding Style
 - Follow existing naming conventions (CamelCase for classes/structs in AST).

@@ -185,22 +185,22 @@ impl HashMap {
     }
 }
 
-struct Stack {
-    data: int*;
+struct Stack[T] {
+    data: @T*;
     size: int;
     capacity: int;
 }
 
-impl Stack {
+impl[T] Stack {
     fn init(cap: int) -> void {
         var c: int = cap;
         if (c <= 0) { c = 10; }
-        self.data = malloc(c * 8) as int*;
+        self.data = malloc(c * 8) as @T*;
         self.size = 0;
         self.capacity = c;
     }
 
-    fn push(val: int) -> void {
+    fn push(val: @T) -> void {
         if (self.size == self.capacity) {
             return;
         }
@@ -208,17 +208,21 @@ impl Stack {
         self.size = self.size + 1;
     }
 
-    fn pop() -> int {
+    fn pop() -> @T {
         if (self.size == 0) {
-            return 0;
+            // NOTE: Returning uninitialized memory if empty.
+            // Future versions will support better error handling or default values.
+            var dummy: @T;
+            return dummy;
         }
         self.size = self.size - 1;
         return self.data[self.size];
     }
 
-    fn peek() -> int {
+    fn peek() -> @T {
         if (self.size == 0) {
-            return 0;
+            var dummy: @T;
+            return dummy;
         }
         return self.data[self.size - 1];
     }
@@ -228,35 +232,38 @@ impl Stack {
     }
 }
 
-struct Queue {
-    data: int*;
+struct Queue[T] {
+    data: @T*;
     front: int;
     rear: int;
     size: int;
     capacity: int;
 }
 
-impl Queue {
+impl[T] Queue {
     fn init(cap: int) -> void {
         var c: int = cap;
         if (c <= 0) { c = 10; }
-        self.data = malloc(c * 8) as int*;
+        self.data = malloc(c * 8) as @T*;
         self.front = 0;
         self.rear = 0;
         self.size = 0;
         self.capacity = c;
     }
 
-    fn push(val: int) -> void {
+    fn push(val: @T) -> void {
         if (self.size == self.capacity) { return; }
         self.data[self.rear] = val;
         self.rear = (self.rear + 1) % self.capacity;
         self.size = self.size + 1;
     }
 
-    fn pop() -> int {
-        if (self.size == 0) { return 0; }
-        var val: int = self.data[self.front];
+    fn pop() -> @T {
+        if (self.size == 0) {
+            var dummy: @T;
+            return dummy;
+        }
+        var val: @T = self.data[self.front];
         self.front = (self.front + 1) % self.capacity;
         self.size = self.size - 1;
         return val;
@@ -265,72 +272,78 @@ impl Queue {
     fn is_empty() -> bool { return self.size == 0; }
 }
 
-struct Deque {
-    data: int*;
+struct Deque[T] {
+    data: @T*;
     front: int;
     rear: int;
     size: int;
     capacity: int;
 }
 
-impl Deque {
+impl[T] Deque {
     fn init(cap: int) -> void {
         var c: int = cap;
         if (c <= 0) { c = 10; }
-        self.data = malloc(c * 8) as int*;
+        self.data = malloc(c * 8) as @T*;
         self.front = 0;
         self.rear = 0;
         self.size = 0;
         self.capacity = c;
     }
 
-    fn push_back(val: int) -> void {
+    fn push_back(val: @T) -> void {
         if (self.size == self.capacity) { return; }
         self.data[self.rear] = val;
         self.rear = (self.rear + 1) % self.capacity;
         self.size = self.size + 1;
     }
 
-    fn push_front(val: int) -> void {
+    fn push_front(val: @T) -> void {
         if (self.size == self.capacity) { return; }
         self.front = (self.front - 1 + self.capacity) % self.capacity;
         self.data[self.front] = val;
         self.size = self.size + 1;
     }
 
-    fn pop_front() -> int {
-        if (self.size == 0) { return 0; }
-        var val: int = self.data[self.front];
+    fn pop_front() -> @T {
+        if (self.size == 0) {
+            var dummy: @T;
+            return dummy;
+        }
+        var val: @T = self.data[self.front];
         self.front = (self.front + 1) % self.capacity;
         self.size = self.size - 1;
         return val;
     }
 
-    fn pop_back() -> int {
-        if (self.size == 0) { return 0; }
+    fn pop_back() -> @T {
+        if (self.size == 0) {
+            var dummy: @T;
+            return dummy;
+        }
         self.rear = (self.rear - 1 + self.capacity) % self.capacity;
-        var val: int = self.data[self.rear];
+        var val: @T = self.data[self.rear];
         self.size = self.size - 1;
         return val;
     }
 }
 
-struct PriorityQueue {
-    data: int*;
+struct PriorityQueue[T] {
+    data: @T*;
     size: int;
     capacity: int;
 }
 
-impl PriorityQueue {
+impl[T] PriorityQueue {
     fn init(cap: int) -> void {
         var c: int = cap;
         if (c <= 0) { c = 10; }
-        self.data = malloc(c * 8) as int*;
+        self.data = malloc(c * 8) as @T*;
         self.size = 0;
         self.capacity = c;
     }
 
-    fn push(val: int) -> void {
+    fn push(val: @T) -> void {
         if (self.size == self.capacity) { return; }
         self.data[self.size] = val;
         var curr: int = self.size;
@@ -339,7 +352,7 @@ impl PriorityQueue {
         while (curr > 0) {
             var parent: int = (curr - 1) / 2;
             if (self.data[curr] > self.data[parent]) {
-                var tmp: int = self.data[curr];
+                var tmp: @T = self.data[curr];
                 self.data[curr] = self.data[parent];
                 self.data[parent] = tmp;
                 curr = parent;
@@ -349,9 +362,12 @@ impl PriorityQueue {
         }
     }
 
-    fn pop() -> int {
-        if (self.size == 0) { return 0; }
-        var top: int = self.data[0];
+    fn pop() -> @T {
+        if (self.size == 0) {
+            var dummy: @T;
+            return dummy;
+        }
+        var top: @T = self.data[0];
         self.size = self.size - 1;
         self.data[0] = self.data[self.size];
 
@@ -369,7 +385,7 @@ impl PriorityQueue {
             }
 
             if (largest != curr) {
-                var tmp: int = self.data[curr];
+                var tmp: @T = self.data[curr];
                 self.data[curr] = self.data[largest];
                 self.data[largest] = tmp;
                 curr = largest;

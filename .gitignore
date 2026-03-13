@@ -1,0 +1,9 @@
+novusc
+*.o
+src/lexer.yy.cpp
+src/parser.tab.cpp
+src/parser.tab.hpp
+site/
+tests/*.exe
+tests/*.ll
+tests/*.o

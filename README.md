@@ -43,7 +43,11 @@ Novus is a statically typed, systems-oriented programming language with an LLVM 
 - `void`: Represents the absence of a value.
 
 ### Generics
-Novus supports generic structs and implementation blocks through monomorphization. Use `[T]` for type parameters and `@T` to refer to them.
+Novus supports generic structs, implementation blocks, and functions through **monomorphization**.
+
+-   **Declaration**: Use `struct Name[T]` or `fn name[T]`.
+-   **Reference**: Use `@T` to refer to the type parameter within the scope.
+-   **Instantiation**: Use `Name[int]` to create a concrete specialization.
 
 ```rust
 struct Box[T] {
@@ -62,9 +66,12 @@ impl[T] Box {
 fn main() -> int {
     var b: Box[int];
     b.set(42);
-    return b.get();
+    printf("Value: %d\n", b.get());
+    return 0;
 }
 ```
+
+For more details, see the [Generics Guide](docs/generics.md).
 
 ### Variables
 Variables are declared using the `var` keyword.

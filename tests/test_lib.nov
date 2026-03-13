@@ -1,7 +1,7 @@
 import "std.nov";
 
 fn main() -> int {
-    var v: Vector;
+    var v: Vector[int];
     v.init(10);
     v.push(100);
     v.push(200);
