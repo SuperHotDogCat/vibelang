@@ -4,7 +4,7 @@ fn main() -> int {
     printf("Testing Extended Stdlib...\n");
 
     // Queue test
-    var q: Queue;
+    var q: Queue[int];
     q.init(5);
     q.push(10);
     q.push(20);
@@ -13,7 +13,7 @@ fn main() -> int {
     }
 
     // PriorityQueue test
-    var pq: PriorityQueue;
+    var pq: PriorityQueue[int];
     pq.init(10);
     pq.push(30);
     pq.push(10);
@@ -26,7 +26,7 @@ fn main() -> int {
     }
 
     // Deque test
-    var dq: Deque;
+    var dq: Deque[int];
     dq.init(5);
     dq.push_front(1);
     dq.push_back(2);
@@ -34,6 +34,7 @@ fn main() -> int {
         if (dq.pop_back() == 2) {
             printf("Deque test passed\n");
         }
+    } // added missing brace found in previous read
 
     // HashSet test
     var s: HashSet;
@@ -55,5 +56,4 @@ fn main() -> int {
     }
 
     return 0;
-    }
 }

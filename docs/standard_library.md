@@ -19,13 +19,15 @@ Novus provides direct access to several C standard library functions via `extern
 
 ## Data Structures
 
-### Vector
+All data structures (except HashSet and HashMap) are **generic**.
+
+### Vector[T]
 
 A dynamic array that grows automatically.
 
 -   `init(cap: int) -> void`: Initializes the vector with an initial capacity.
--   `push(val: int) -> void`: Appends an element to the end.
--   `get(idx: int) -> int`: Retrieves the element at the specified index.
+-   `push(val: @T) -> void`: Appends an element to the end.
+-   `get(idx: int) -> @T`: Retrieves the element at the specified index.
 -   `resize(new_cap: int) -> void`: (Internal) Increases the capacity of the vector.
 
 ### HashSet
@@ -44,39 +46,39 @@ A collection of key-value pairs (integers to integers).
 -   `put(key: int, val: int) -> void`: Associates a value with a key.
 -   `get(key: int) -> int`: Retrieves the value associated with a key, or `0` if not found.
 
-### Stack
+### Stack[T]
 
 A Last-In, First-Out (LIFO) collection.
 
 -   `init(cap: int) -> void`: Initializes the stack.
--   `push(val: int) -> void`: Pushes an element onto the stack.
--   `pop() -> int`: Removes and returns the top element.
--   `peek() -> int`: Returns the top element without removing it.
+-   `push(val: @T) -> void`: Pushes an element onto the stack.
+-   `pop() -> @T`: Removes and returns the top element.
+-   `peek() -> @T`: Returns the top element without removing it.
 -   `is_empty() -> bool`: Returns `true` if the stack is empty.
 
-### Queue
+### Queue[T]
 
 A First-In, First-Out (FIFO) collection using a circular buffer.
 
 -   `init(cap: int) -> void`: Initializes the queue.
--   `push(val: int) -> void`: Adds an element to the rear.
--   `pop() -> int`: Removes and returns the element from the front.
+-   `push(val: @T) -> void`: Adds an element to the rear.
+-   `pop() -> @T`: Removes and returns the element from the front.
 -   `is_empty() -> bool`: Returns `true` if the queue is empty.
 
-### Deque
+### Deque[T]
 
 A double-ended queue.
 
 -   `init(cap: int) -> void`: Initializes the deque.
--   `push_back(val: int) -> void`: Adds an element to the rear.
--   `push_front(val: int) -> void`: Adds an element to the front.
--   `pop_front() -> int`: Removes and returns the element from the front.
--   `pop_back() -> int`: Removes and returns the element from the rear.
+-   `push_back(val: @T) -> void`: Adds an element to the rear.
+-   `push_front(val: @T) -> void`: Adds an element to the front.
+-   `pop_front() -> @T`: Removes and returns the element from the front.
+-   `pop_back() -> @T`: Removes and returns the element from the rear.
 
-### PriorityQueue
+### PriorityQueue[T]
 
 A max-heap implementation.
 
 -   `init(cap: int) -> void`: Initializes the priority queue.
--   `push(val: int) -> void`: Inserts an element into the queue.
--   `pop() -> int`: Removes and returns the largest element.
+-   `push(val: @T) -> void`: Inserts an element into the queue.
+-   `pop() -> @T`: Removes and returns the largest element.
