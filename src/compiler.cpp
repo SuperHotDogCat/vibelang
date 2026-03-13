@@ -96,6 +96,11 @@ void Compiler::compile(const std::string& mainFile) {
     }
     analyzer.analyzeOnly(mainProgram.get());
 
+    // Move specialized declarations to the main program so codegen can see them
+    for (auto& decl : analyzer.specializedDecls) {
+        mainProgram->decls.push_back(std::move(decl));
+    }
+
     CodeGenerator generator;
     for (auto& pair : parsedFiles) {
         generator.generate(pair.second.get());

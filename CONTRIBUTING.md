@@ -1,92 +1,46 @@
 # Contributing to Novus
 
-First off, thank you for considering contributing to Novus! It's people like you who make Novus such a great tool.
+Thank you for your interest in contributing to Novus! This document provides an overview of the compiler architecture and instructions for building and testing your changes.
 
-## Code of Conduct
+## Compiler Architecture
 
-By participating in this project, you are expected to uphold our Code of Conduct. Please report unacceptable behavior to the project maintainers.
+The Novus compiler follows a standard pipeline:
 
-## How Can I Contribute?
+1.  **Lexer (`src/lexer.l`)**: Tokenizes the source code using Flex.
+2.  **Parser (`src/parser.y`)**: Generates the Abstract Syntax Tree (AST) using Bison.
+3.  **Semantic Analyzer (`src/semantics.cpp`)**: Performs type checking, scope resolution, and monomorphization of generics.
+4.  **IR Generator (`src/codegen.cpp`)**: Generates LLVM IR using the LLVM 18 API.
+5.  **Compiler Driver (`src/compiler.cpp`)**: Manages the compilation process, including path resolution and recursive imports.
 
-### Reporting Bugs
+## Development Environment
 
-- Use the GitHub issue tracker to report bugs.
-- Describe the expected behavior and the actual behavior.
-- Provide a minimal reproducible example if possible.
+### Prerequisites
+- LLVM 18 (`llvm-18-dev`)
+- Clang 18 (`clang-18`)
+- Flex
+- Bison
+- Make
+- G++ (C++17 support)
 
-### Suggesting Enhancements
-
-- Use the GitHub issue tracker to suggest enhancements.
-- Describe the goal of the enhancement and why it would be useful.
-
-### Pull Requests
-
-- Pull requests are always welcome!
-- Ensure your code follows the existing style of the project.
-- Write tests for any new features or bug fixes.
-- Ensure all tests pass before submitting your PR.
-
-## Development Environment Setup
-
-Novus development requires several dependencies, primarily LLVM 18.
-
-### Using Docker (Recommended)
-
-The easiest way to get started is using the provided `Dockerfile`.
-
-```bash
-docker build -t novus-dev .
-docker run -it novus-dev
-```
-
-### Manual Setup (Ubuntu 24.04)
-
-If you prefer to set up your environment manually:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y llvm-18-dev clang-18 flex bison make g++
-```
-
-### Building the Project
-
-Use the `Makefile` to build the compiler and the project manager:
-
+### Building the Compiler
+Run `make` in the root directory to build the `novusc` executable:
 ```bash
 make
 ```
 
-To install locally:
+## Testing
 
+Always run the full test suite before submitting changes:
 ```bash
-sudo make install
+./tests/run_tests.sh
 ```
 
-## Project Structure
+### Adding New Tests
+Create a `.nov` file in the `tests/` directory. If the test should pass, ensure it returns `0` from the `main` function. The `run_tests.sh` script automatically detects and executes all `.nov` files in the `tests/` folder.
 
-- `src/`: Compiler source code (C++).
-  - `lexer.l`: Flex lexer definition.
-  - `parser.y`: Bison parser definition.
-  - `ast.h`: Abstract Syntax Tree nodes.
-  - `semantics.cpp`: Semantic analysis and type checking.
-  - `codegen.cpp`: LLVM IR generation.
-- `lib/`: Standard library (`std.nov`).
-- `bin/`: Built-in tools like `novum`.
-- `tests/`: Test suite.
+## Generics Implementation
+Novus uses **monomorphization**. When a generic struct is used with concrete types, the `SemanticAnalyzer` clones the AST of the struct and its methods, substituting type parameters with concrete types. These specialized declarations are then added to the program for code generation.
 
-## Coding Standards
-
-- Use 4 spaces for indentation in C++ and Novus code.
-- Follow standard C++ naming conventions.
-- Comment complex logic in the compiler.
-- Ensure Novus code is well-documented and readable.
-
-## Running Tests
-
-Before submitting a PR, ensure all tests pass:
-
-```bash
-bash tests/run_tests.sh
-```
-
-Adding new tests is highly encouraged! Create a `.nov` file in `tests/` and add it to the test runner if necessary.
+## Coding Style
+- Follow existing naming conventions (CamelCase for classes/structs in AST).
+- Ensure new features are accompanied by documentation and tests.

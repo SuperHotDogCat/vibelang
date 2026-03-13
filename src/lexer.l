@@ -113,6 +113,7 @@ extern int yylex();
 ","                 { return ','; }
 "."                 { return '.'; }
 ":"                 { return ':'; }
+"@"                 { return '@'; }
 "..."                { return ELLIPSIS; }
 "->"                { return ARROW; }
 

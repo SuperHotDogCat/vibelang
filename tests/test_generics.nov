@@ -1,0 +1,25 @@
+struct Box[T] {
+    value: @T;
+}
+
+impl[T] Box {
+    fn set(val: @T) -> void {
+        self.value = val;
+    }
+
+    fn get() -> @T {
+        return self.value;
+    }
+}
+
+fn main() -> int {
+    var intBox: Box[int];
+    intBox.set(123);
+    if (intBox.get() != 123) { return 1; }
+
+    var floatBox: Box[float];
+    floatBox.set(3.14);
+    if (floatBox.get() != 3.14) { return 2; }
+
+    return 0;
+}
