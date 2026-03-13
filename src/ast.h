@@ -11,7 +11,13 @@ namespace novus {
 enum class TypeKind {
     Void,
     Int,
+    Int16,
+    Int32,
+    Int64,
     Float,
+    Float16,
+    Float32,
+    Float64,
     Bool,
     Char,
     String,
@@ -37,7 +43,13 @@ public:
         switch (kind) {
             case TypeKind::Void: return "void";
             case TypeKind::Int: return "int";
+            case TypeKind::Int16: return "int16";
+            case TypeKind::Int32: return "int32";
+            case TypeKind::Int64: return "int64";
             case TypeKind::Float: return "float";
+            case TypeKind::Float16: return "float16";
+            case TypeKind::Float32: return "float32";
+            case TypeKind::Float64: return "float64";
             case TypeKind::Bool: return "bool";
             case TypeKind::Char: return "char";
             case TypeKind::String: return "string";

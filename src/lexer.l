@@ -45,7 +45,13 @@ extern int yylex();
 "as"                { return AS; }
 
 "void"              { return VOID; }
+"int16"             { return INT16; }
+"int32"             { return INT32; }
+"int64"             { return INT64; }
 "int"               { return INT; }
+"float16"           { return FLOAT16; }
+"float32"           { return FLOAT32; }
+"float64"           { return FLOAT64; }
 "float"             { return FLOAT; }
 "bool"              { return BOOL; }
 "char"              { return CHAR; }
