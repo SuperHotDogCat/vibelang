@@ -4,34 +4,47 @@ Welcome to the Novus programming language! This guide will help you understand t
 
 ## 1. Project Structure
 
-A typical Novus project is organized as follows:
+A typical Novus project managed by `novum` is organized as follows:
 
-- `src/`: Your application source files.
-- `lib/`: Local libraries or the Novus standard library.
-- `tests/`: Integration and unit tests.
+- `src/`: Your application source files (e.g., `main.nov`).
+- `lib/`: Local libraries or project-specific modules.
+- `build/`: Output directory for compiled binaries and objects (created by `novum build`).
+- `Project.toml`: Project configuration file.
 
 ## 2. Core Concepts
 
 ### Statically Typed
-Every variable and function parameter must have a type. Types cannot change once defined.
-
-### Structs and Implementation
-Novus uses a separation of data and behavior. Define data in `struct` and methods in `impl`.
+Every variable and function parameter must have a type. Types are checked at compile-time.
 
 ```rust
-struct Counter {
-    val: int;
+var x: int = 10;
+var name: string = "Novus";
+```
+
+### Structs and Implementation
+Novus uses a separation of data (structs) and behavior (impl blocks).
+
+```rust
+struct Rectangle {
+    width: int;
+    height: int;
 }
 
-impl Counter {
-    fn inc() -> void {
-        self.val = self.val + 1;
+impl Rectangle {
+    // Methods receive an implicit 'self' pointer
+    fn area() -> int {
+        return self.width * self.height;
+    }
+
+    fn scale(factor: int) -> void {
+        self.width = self.width * factor;
+        self.height = self.height * factor;
     }
 }
 ```
 
 ### Methods and `self`
-All methods automatically receive a `self` parameter, which is a pointer to the instance. You access members using `self.member`.
+Methods are defined within `impl` blocks. The `self` keyword refers to a pointer to the instance of the struct the method is called on.
 
 ### Generics and Monomorphization
 Novus supports generics for structs and `impl` blocks. When a generic struct is instantiated with concrete type arguments (e.g., `Box[int]`), the compiler generates a specialized version of the struct and its methods.
@@ -67,84 +80,103 @@ var i: int = x as int;
 
 ## 4. Memory Management
 
-Novus provides low-level control over memory.
+Novus provides low-level control over memory, similar to C.
 
-- **Stack Allocation**: Local variables of struct types are allocated on the stack.
-- **Heap Allocation**: Use `malloc` from `std.nov` for heap allocation. Remember to `free`.
+- **Stack Allocation**: Local variables are allocated on the stack.
+- **Heap Allocation**: Use `malloc` from the standard library for heap allocation and `free` to deallocate.
 
 ```rust
 import "std.nov";
 
-fn demo() -> void {
+fn heap_example() -> void {
+    // Allocate space for an integer
     var p: int* = malloc(8) as int*;
-    *p = 100;
+    *p = 42;
+    printf("Value on heap: %d\n", *p);
     free(p as void*);
 }
 ```
 
-## 4. Working with Strings
+## 4. Control Flow
 
-Novus strings are immutable pointers to characters (`i8*`).
+Novus supports standard control flow constructs.
 
+### If-Else
 ```rust
-var s: string = "Hello\n";
-printf(s);
+if (x > 10) {
+    printf("Greater than 10\n");
+} else if (x == 10) {
+    printf("Exactly 10\n");
+} else {
+    printf("Less than 10\n");
+}
 ```
 
-Escape sequences like `\n`, `\t`, `\r`, `\\`, and `\"` are supported.
-
-## 5. Standard Library Data Structures
-
-### Vector
-A dynamic array that grows as needed.
-
+### While Loops
 ```rust
-var v: Vector;
-v.init(10);
-v.push(1);
-var x: int = v.get(0);
+var i: int = 0;
+while (i < 5) {
+    printf("i = %d\n", i);
+    i = i + 1;
+}
 ```
 
-### HashSet and HashMap
-Efficient collections using open-addressing hashing with linear probing.
+## 5. Pointers and Arrays
+
+### Pointers
+Pointers are declared with `*` and accessed with `&` (address-of) and `*` (dereference).
 
 ```rust
-var map: HashMap;
-map.init(16);
-map.put(1, 100);
-var val: int = map.get(1);
+var x: int = 10;
+var ptr: int* = &x;
+*ptr = 20; // x is now 20
 ```
 
-### Queue, Deque, and PriorityQueue
-Additional data structures for various use cases:
-
-- **Queue**: FIFO queue using a circular buffer.
-- **Deque**: Double-ended queue.
-- **PriorityQueue**: Max-heap implementation for prioritized processing.
+### Arrays
+Fixed-size arrays are supported.
 
 ```rust
-var pq: PriorityQueue;
-pq.init(10);
-pq.push(50);
-var top: int = pq.pop();
+var arr: int[5];
+arr[0] = 100;
+var val: int = arr[0];
 ```
 
-## 6. Debugging Tips
+## 6. Advanced Topics
 
-- **Compiler Errors**: The Novus compiler provides line and column numbers for semantic errors (type mismatches, undefined variables).
-- **LLVM IR**: Examine the generated `.ll` file to see exactly what instructions are being generated.
-- **GDB**: You can debug the final binary using `gdb` just like a C program.
-
-## 7. Interop with C
-
-You can call any C function by declaring it `extern`.
+### C Interoperability
+You can call C functions by declaring them with `extern fn`.
 
 ```rust
-extern fn getchar() -> int;
+extern fn pow(base: float, exp: float) -> float;
 
 fn main() -> int {
-    var c: int = getchar();
+    var res: float = pow(2.0, 10.0);
+    printf("2^10 = %f\n", res);
     return 0;
 }
 ```
-Link with the appropriate library (usually libc is included by default with `gcc`).
+
+### Module System and Imports
+Use `import` to include other files. The compiler searches the current directory and `NOVUS_PATH`.
+
+```rust
+import "std.nov";
+import "my_module.nov";
+```
+
+### Explicit Casting
+Use `as` for type conversions.
+
+```rust
+var f: float = 3.9;
+var i: int = f as int; // i becomes 3
+```
+
+## 7. Standard Library
+Novus comes with a standard library (`std.nov`) that includes:
+- Dynamic arrays (`Vector`)
+- Hash collections (`HashSet`, `HashMap`)
+- Linear collections (`Stack`, `Queue`, `Deque`)
+- Priority Queue
+
+See the [Standard Library Reference](standard_library.md) for more details.

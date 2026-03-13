@@ -1,0 +1,35 @@
+site_name: Novus Programming Language
+site_description: A statically typed, systems-oriented programming language with an LLVM backend.
+site_author: Novus Team
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Novum Tool: novum_tool.md
+  - Programming Guide: programming_guide.md
+  - Language Reference:
+      - Numeric Types: numeric_types.md
+      - Standard Library: standard_library.md
+      - Path Resolution: path_resolution.md
+  - Internals:
+      - C Interoperability: interop_internals.md
+      - Deployment: deployment.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

@@ -69,151 +69,34 @@ fn main() -> int {
 ### Variables
 Variables are declared using the `var` keyword.
 ```rust
-var x: int = 10;
-var pi: float = 3.14159;
-var is_valid: bool = true;
-var msg: string = "Hello, Novus!\n";
+var x: int = 42;          // default 64-bit int
+var y: int32 = 100;       // explicit 32-bit int
+var pi: float32 = 3.14;   // explicit 32-bit float
+var msg: string = "Hello";
 ```
 
 ### Functions
-Functions are defined using the `fn` keyword.
 ```rust
 fn add(a: int, b: int) -> int {
     return a + b;
 }
-
-fn greet() -> void {
-    printf("Hello!\n");
-}
 ```
 
-### Structs and Methods
-Structs define data layouts, and `impl` blocks define methods for those structs. Methods always receive a `self` pointer as the first argument.
+### Structs & Methods
 ```rust
-struct Point {
-    x: int;
-    y: int;
-}
+struct Point { x: int; y: int; }
 
 impl Point {
-    fn init(x: int, y: int) -> void {
-        self.x = x;
-        self.y = y;
-    }
-
     fn distance_sq() -> int {
         return self.x * self.x + self.y * self.y;
     }
 }
 ```
 
-### Control Flow
-Supports standard `if-else` and `while` loops.
-```rust
-if (x > 0) {
-    printf("Positive\n");
-} else {
-    printf("Non-positive\n");
-}
+## 🤝 Contributing
 
-while (i < 10) {
-    i = i + 1;
-}
-```
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) to get started.
 
-### Operators
-- **Arithmetic**: `+`, `-`, `*`, `/`, `%`
-- **Relational**: `==`, `!=`, `<`, `>`, `<=`, `>=`
-- **Bitwise**: `<<`, `>>`
-- **Logical**: `!`
-- **Pointer**: `&` (address-of), `*` (dereference)
+## 📄 License
 
-### Pointers and Memory
-Novus allows low-level memory access and explicit casting.
-```rust
-var p: int*;
-var x: int = 42;
-p = &x;
-var val: int = *p;
-
-// Casting
-var raw: void* = malloc(8);
-var ptr: int* = raw as int*;
-```
-
-### Module System
-Import other Novus files using the `import` statement. The compiler searches in the current directory and directories specified in the `NOVUS_PATH` environment variable.
-```rust
-import "std.nov";
-```
-
-## C Interoperability
-
-### Calling C from Novus
-Use `extern fn` to declare C functions. Support for variadic functions is included (e.g., `printf`).
-```rust
-extern fn printf(fmt: string, ...) -> int;
-extern fn malloc(size: int) -> void*;
-```
-
-### Calling Novus from C
-Any function defined in Novus uses the standard C calling convention and can be called from C if declared `extern`.
-
-## Installation
-To install Novus on your system:
-```bash
-make
-sudo make install
-```
-See the [Installation Guide](docs/installation.md) for more details.
-
-## Project Management with Novum
-`novum` is the primary tool for managing Novus projects. It handles scaffolding, building, and running your code.
-
-```bash
-# Create a new project
-novum init my_app
-cd my_app
-
-# Build and run
-novum run
-```
-See [Novum Tool Guide](docs/novum_tool.md) for more details.
-
-## Standard Library (`lib/std.nov`)
-- `Vector`: Dynamic array with automatic resizing.
-- `HashSet`: Efficient set implementation using hashing.
-- `HashMap`: Key-value store using hashing.
-- Memory: `malloc`, `free`, and `printf` wrappers.
-
-## Documentation Index
-Comprehensive documentation can be found in the `docs/` directory:
-
-- [C Interoperability Internals](docs/interop_internals.md): Technical details on how Novus talks to C.
-- [Module Path Resolution](docs/path_resolution.md): How `import` and `NOVUS_PATH` work.
-- [Novum Tool Guide](docs/novum_tool.md): Usage of the project management tool.
-- [Installation Guide](docs/installation.md): How to install Novus on your system.
-- [Programming Guide](docs/programming_guide.md): A guide for developers writing Novus code.
-
-## Compilation Guide
-
-1. **Build the Compiler**:
-   ```bash
-   make
-   ```
-2. **Compile to LLVM IR**:
-   ```bash
-   ./novusc my_program.nov
-   ```
-3. **Compile to Executable**:
-   ```bash
-   llc-18 my_program.ll -relocation-model=pic -filetype=obj -o my_program.o
-   gcc my_program.o -o my_program
-   ```
-
-## Docker Usage
-The provided `Dockerfile` creates a complete development environment with all dependencies.
-```bash
-docker build -t novus .
-docker run -it novus
-```
+Novus is released under the MIT License.
