@@ -37,14 +37,14 @@ Novus is a statically typed, systems-oriented programming language with an LLVM 
 
 ## 📖 Documentation
 
-For full documentation, visit our [Documentation Website](https://github.com/your-username/novus).
+For full documentation, visit our [Documentation Website](https://your-username.github.io/novus/).
 
 Key topics:
-- [Programming Guide](docs/programming_guide.md)
-- [Standard Library Reference](docs/standard_library.md)
-- [C Interoperability](docs/interop_internals.md)
-- [Installation Guide](docs/installation.md)
-- [Numeric Types & Bit-widths](docs/numeric_types.md)
+- [Programming Guide](programming_guide.md)
+- [Standard Library Reference](standard_library.md)
+- [C Interoperability](interop_internals.md)
+- [Installation Guide](installation.md)
+- [Numeric Types & Bit-widths](numeric_types.md)
 
 ## 🛠 Language at a Glance
 
@@ -76,7 +76,7 @@ impl Point {
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) to get started.
+We welcome contributions! Please see our [Contributing Guidelines](contributing.md) to get started.
 
 ## 📄 License
 
