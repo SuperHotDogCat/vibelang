@@ -5,6 +5,7 @@ struct Pair[K, V] {
 
 struct Box[T] {
     value: @T;
+    data: @T*;
 }
 
 fn main() -> int {
