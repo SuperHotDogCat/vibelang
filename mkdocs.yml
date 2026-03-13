@@ -19,6 +19,7 @@ nav:
   - Programming Guide: programming_guide.md
   - Language Reference:
       - Numeric Types: numeric_types.md
+      - Generics: generics.md
       - Standard Library: standard_library.md
       - Path Resolution: path_resolution.md
   - Internals:

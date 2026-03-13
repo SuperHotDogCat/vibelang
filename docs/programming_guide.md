@@ -47,16 +47,24 @@ impl Rectangle {
 Methods are defined within `impl` blocks. The `self` keyword refers to a pointer to the instance of the struct the method is called on.
 
 ### Generics and Monomorphization
-Novus supports generics for structs and `impl` blocks. When a generic struct is instantiated with concrete type arguments (e.g., `Box[int]`), the compiler generates a specialized version of the struct and its methods.
+Novus supports generics for structs, `impl` blocks, and functions. When a generic template is instantiated with concrete type arguments (e.g., `Box[int]`), the compiler generates a specialized version of the code.
 
-- **Syntax**: `struct Name[T1, T2] { ... }`
-- **Reference**: Use `@T` to refer to the type parameter within the struct or `impl` block.
-- **Methods**: Methods in an `impl[T] StructName` block are specialized whenever `StructName[ConcreteType]` is used.
+For a deep dive, see the [Generics Reference](generics.md).
+
+- **Syntax**: `struct Name[T] { ... }` or `fn name[T](...) -> ...`
+- **Reference**: Use `@T` to refer to the type parameter within the scope.
+- **Specialization**: Specialized whenever used with concrete types (e.g., `var v: Vector[int];`).
 
 ```rust
 struct Pair[K, V] {
     first: @K;
     second: @V;
+}
+
+fn swap[T](a: @T*, b: @T*) -> void {
+    var tmp: @T = *a;
+    *a = *b;
+    *b = tmp;
 }
 ```
 
@@ -89,11 +97,11 @@ Novus provides low-level control over memory, similar to C.
 import "std.nov";
 
 fn heap_example() -> void {
-    // Allocate space for an integer
-    var p: int* = malloc(8) as int*;
-    *p = 42;
-    printf("Value on heap: %d\n", *p);
-    free(p as void*);
+    // Allocate space for 10 integers
+    var v: Vector[int];
+    v.init(10);
+    v.push(42);
+    printf("Value: %d\n", v.get(0));
 }
 ```
 

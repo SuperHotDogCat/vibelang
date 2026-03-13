@@ -41,6 +41,7 @@ For full documentation, visit our [Documentation Website](https://your-username.
 
 Key topics:
 - [Programming Guide](programming_guide.md)
+- [Generics Guide](generics.md)
 - [Standard Library Reference](standard_library.md)
 - [C Interoperability](interop_internals.md)
 - [Installation Guide](installation.md)
