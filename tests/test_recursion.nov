@@ -1,0 +1,14 @@
+fn factorial(n: int) -> int {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+fn main() -> int {
+    var res: int = factorial(5);
+    if (res == 120) {
+        return 0;
+    }
+    return 1;
+}
