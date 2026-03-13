@@ -1,0 +1,26 @@
+struct Pair[K, V] {
+    first: @K;
+    second: @V;
+}
+
+struct Box[T] {
+    value: @T;
+}
+
+fn main() -> int {
+    var p: Pair[int, float];
+    p.first = 100;
+    p.second = 2.5;
+
+    if (p.first != 100) { return 1; }
+    if (p.second != 2.5) { return 2; }
+
+    var b: Box[Box[int]];
+    var inner: Box[int];
+    inner.value = 42;
+    b.value = inner;
+
+    if (b.value.value != 42) { return 3; }
+
+    return 0;
+}

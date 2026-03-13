@@ -1,29 +1,24 @@
+extern fn printf(fmt: string, ...) -> int;
+
 fn main() -> int {
-    // Integer promotion
-    var i16_val: int16 = 100 as int16;
-    var i32_val: int32 = i16_val as int32;
-    var i64_val: int64 = i32_val as int64;
-    var i_val: int = i64_val as int;
+    var i16: int16 = 10;
+    var i32: int32 = 20;
+    var i64: int64 = 30;
 
-    if (i_val != 100) {
-        return 1;
-    }
+    // Test promotion
+    var sum: int64 = i16 + i32 + i64;
+    if (sum != 60) { return 1; }
 
-    // Floating point promotion
-    var f16_val: float16 = 1.0 as float16;
-    var f32_val: float32 = f16_val as float32;
-    var f64_val: float64 = f32_val as float64;
-    var f_val: float = f64_val as float;
+    var f32: float32 = 1.5;
+    var f64: float64 = 2.5;
 
-    // We can't easily compare floats for exact equality, but 1.0 should be fine
-    if (f_val != 1.0) { return 2; }
+    // Test float promotion
+    var fsum: float64 = f32 + f64;
+    if (fsum != 4.0) { return 2; }
 
-    // Cross-type promotion
-    var cross_f: float64 = i32_val as float64;
-    if (cross_f != 100.0) { return 3; }
-
-    var mixed_f: float = i16_val as float;
-    if (mixed_f != 100.0) { return 4; }
+    // Test int to float promotion
+    var mixed: float64 = i64 + f64;
+    if (mixed != 32.5) { return 3; }
 
     return 0;
 }

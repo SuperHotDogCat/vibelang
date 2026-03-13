@@ -6,6 +6,7 @@ Novus is a statically typed, systems-oriented programming language with an LLVM 
 - [Features](#features)
 - [Language Specification](#language-specification)
   - [Basic Types](#basic-types)
+  - [Generics](#generics)
   - [Variables](#variables)
   - [Functions](#functions)
   - [Structs and Methods](#structs-and-methods)
@@ -32,12 +33,38 @@ Novus is a statically typed, systems-oriented programming language with an LLVM 
 ## Language Specification
 
 ### Basic Types
-- `int`: 64-bit signed integer (LLVM `i64`).
-- `float`: 64-bit double-precision floating point (LLVM `double`).
+- `int`: Default 64-bit signed integer (LLVM `i64`).
+- `int16`, `int32`, `int64`: Specific bit-width signed integers.
+- `float`: Default 64-bit double-precision floating point (LLVM `double`).
+- `float16`, `float32`, `float64`: Specific bit-width floating point types.
 - `bool`: Boolean type (`true` or `false`).
 - `char`: 8-bit character.
 - `string`: Immutable UTF-8 string (internally `i8*`).
 - `void`: Represents the absence of a value.
+
+### Generics
+Novus supports generic structs and implementation blocks through monomorphization. Use `[T]` for type parameters and `@T` to refer to them.
+
+```rust
+struct Box[T] {
+    value: @T;
+}
+
+impl[T] Box {
+    fn set(val: @T) -> void {
+        self.value = val;
+    }
+    fn get() -> @T {
+        return self.value;
+    }
+}
+
+fn main() -> int {
+    var b: Box[int];
+    b.set(42);
+    return b.get();
+}
+```
 
 ### Variables
 Variables are declared using the `var` keyword.

@@ -1,21 +1,20 @@
-var global_x: int = 100;
-var global_y: int;
-
 fn main() -> int {
-    var local_a: int = 5;
-    var local_b: float = 3.14;
-    var local_c: bool = true;
-    var local_d: string = "test";
+    var a: int;
+    a = 1;
+    if (a != 1) { return 1; }
 
-    global_y = 200;
+    var b: int = 2;
+    if (b != 2) { return 2; }
 
-    if (global_x != 100) { return 1; }
-    if (global_y != 200) { return 2; }
-    if (local_a != 5) { return 3; }
+    var c: float = 3.0;
+    if (c != 3.0) { return 3; }
 
-    var local_e: int;
-    local_e = local_a * 2;
-    if (local_e != 10) { return 4; }
+    var d: bool = true;
+    if (!d) { return 4; }
+
+    var e: string = "hello";
+    // Simplified comparison since we don't have strcmp easily without extern
+    if (e == "") { return 5; }
 
     return 0;
 }

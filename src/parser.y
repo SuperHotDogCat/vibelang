@@ -34,6 +34,8 @@ T* setLoc(T* node, const YYLTYPE& loc) {
     novus::Stmt *stmt;
     novus::Decl *decl;
     novus::Type *type;
+    std::vector<std::string> *ident_list;
+    std::vector<std::shared_ptr<novus::Type>> *type_list;
     std::vector<std::unique_ptr<novus::Expr>> *expr_list;
     std::vector<std::unique_ptr<novus::Stmt>> *stmt_list;
     std::vector<std::unique_ptr<novus::Decl>> *decl_list;
@@ -52,6 +54,8 @@ T* setLoc(T* node, const YYLTYPE& loc) {
 %type <stmt> stmt expr_stmt var_decl_stmt block_stmt if_stmt while_stmt return_stmt import_stmt
 %type <decl> decl func_decl extern_decl struct_decl impl_block
 %type <type> type base_type
+%type <ident_list> type_params
+%type <type_list> type_args
 %type <expr_list> arg_list
 %type <stmt_list> stmt_list import_list
 %type <decl_list> decl_list
@@ -124,6 +128,12 @@ func_decl:
         $$ = setLoc(new FunctionDecl(std::shared_ptr<Type>($7), *$2, std::move(*$4), std::unique_ptr<BlockStmt>(static_cast<BlockStmt*>($8))), @1);
         delete $2; delete $4;
     }
+    | FN IDENT '[' type_params ']' '(' param_list ')' ARROW type block_stmt {
+        auto* fd = new FunctionDecl(std::shared_ptr<Type>($10), *$2, std::move(*$7), std::unique_ptr<BlockStmt>(static_cast<BlockStmt*>($11)));
+        fd->typeParams = std::move(*$4);
+        $$ = setLoc(fd, @1);
+        delete $2; delete $4; delete $7;
+    }
     | FN IDENT '(' param_list ')' ARROW type ';' {
         $$ = setLoc(new FunctionDecl(std::shared_ptr<Type>($7), *$2, std::move(*$4), nullptr), @1);
         delete $2; delete $4;
@@ -140,6 +150,12 @@ struct_decl:
     STRUCT IDENT '{' field_list '}' {
         $$ = setLoc(new StructDecl(*$2, std::move(*$4)), @1);
         delete $2; delete $4;
+    }
+    | STRUCT IDENT '[' type_params ']' '{' field_list '}' {
+        auto* sd = new StructDecl(*$2, std::move(*$7));
+        sd->typeParams = std::move(*$4);
+        $$ = setLoc(sd, @1);
+        delete $2; delete $4; delete $7;
     }
     ;
 
@@ -163,6 +179,21 @@ impl_block:
         $$ = setLoc(new ImplDecl(*$2, std::move(methods)), @1);
         delete $2;
     }
+    | IMPL '[' type_params ']' IDENT '{' decl_list '}' {
+        std::vector<std::unique_ptr<MethodDecl>> methods;
+        if ($7) {
+            for(auto& d : *$7) {
+                if (auto* fd = dynamic_cast<FunctionDecl*>(d.release())) {
+                    methods.push_back(std::make_unique<MethodDecl>(*$5, std::unique_ptr<FunctionDecl>(fd)));
+                }
+            }
+            delete $7;
+        }
+        auto* id = new ImplDecl(*$5, std::move(methods));
+        id->typeParams = std::move(*$3);
+        $$ = setLoc(id, @1);
+        delete $3; delete $5;
+    }
     ;
 
 type:
@@ -185,6 +216,18 @@ base_type:
     | CHAR { $$ = new ScalarType(TypeKind::Char); }
     | STRING { $$ = new ScalarType(TypeKind::String); }
     | IDENT { $$ = new StructType(*$1); delete $1; }
+    | IDENT '[' type_args ']' { $$ = new GenericInstantiationType(*$1, std::move(*$3)); delete $1; delete $3; }
+    | '@' IDENT { $$ = new TypeParameterType(*$2); delete $2; }
+    ;
+
+type_params:
+    IDENT { $$ = new std::vector<std::string>(); $$->push_back(*$1); delete $1; }
+    | type_params ',' IDENT { if ($1) $1->push_back(*$3); delete $3; $$ = $1; }
+    ;
+
+type_args:
+    type { $$ = new std::vector<std::shared_ptr<Type>>(); $$->push_back(std::shared_ptr<Type>($1)); }
+    | type_args ',' type { if ($1) $1->push_back(std::shared_ptr<Type>($3)); $$ = $1; }
     ;
 
 stmt:
