@@ -126,9 +126,9 @@ void SemanticAnalyzer::visitStmt(Stmt* stmt) {
 
 void SemanticAnalyzer::visitExpr(Expr* expr) {
     if (auto* il = dynamic_cast<IntLiteral*>(expr)) {
-        il->evaluatedType = std::make_shared<ScalarType>(TypeKind::Int);
+        il->evaluatedType = std::make_shared<ScalarType>(TypeKind::Int64);
     } else if (auto* fl = dynamic_cast<FloatLiteral*>(expr)) {
-        fl->evaluatedType = std::make_shared<ScalarType>(TypeKind::Float);
+        fl->evaluatedType = std::make_shared<ScalarType>(TypeKind::Float64);
     } else if (auto* bl = dynamic_cast<BoolLiteral*>(expr)) {
         bl->evaluatedType = std::make_shared<ScalarType>(TypeKind::Bool);
     } else if (auto* sl = dynamic_cast<StringLiteral*>(expr)) {
@@ -232,6 +232,22 @@ void SemanticAnalyzer::visitExpr(Expr* expr) {
 
 bool SemanticAnalyzer::isAssignable(std::shared_ptr<Type> target, std::shared_ptr<Type> source) {
     if (target->equals(source.get())) return true;
+
+    // Promotion rules for integers
+    if (target->kind == TypeKind::Int32 && (source->kind == TypeKind::Int16)) return true;
+    if (target->kind == TypeKind::Int64 && (source->kind == TypeKind::Int16 || source->kind == TypeKind::Int32 || source->kind == TypeKind::Int)) return true;
+    if (target->kind == TypeKind::Int && (source->kind == TypeKind::Int16 || source->kind == TypeKind::Int32 || source->kind == TypeKind::Int64)) return true;
+
+    // Promotion rules for floats
+    if (target->kind == TypeKind::Float32 && (source->kind == TypeKind::Float16)) return true;
+    if (target->kind == TypeKind::Float64 && (source->kind == TypeKind::Float16 || source->kind == TypeKind::Float32 || source->kind == TypeKind::Float)) return true;
+    if (target->kind == TypeKind::Float && (source->kind == TypeKind::Float16 || source->kind == TypeKind::Float32 || source->kind == TypeKind::Float64)) return true;
+
+    // Cross-type promotion (Int to Float)
+    if ((target->kind == TypeKind::Float || target->kind == TypeKind::Float64) &&
+        (source->kind == TypeKind::Int || source->kind == TypeKind::Int64 || source->kind == TypeKind::Int32 || source->kind == TypeKind::Int16)) return true;
+    if (target->kind == TypeKind::Float32 && (source->kind == TypeKind::Int32 || source->kind == TypeKind::Int16)) return true;
+
     if (target->kind == TypeKind::Float && source->kind == TypeKind::Int) return true;
     if (target->kind == TypeKind::String && source->kind == TypeKind::Pointer) {
          auto* pt = static_cast<PointerType*>(source.get());

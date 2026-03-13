@@ -65,7 +65,13 @@ llvm::Type* CodeGenerator::getLLVMType(Type* type) {
     switch (type->kind) {
         case TypeKind::Void: return builder->getVoidTy();
         case TypeKind::Int: return builder->getInt64Ty();
+        case TypeKind::Int16: return builder->getInt16Ty();
+        case TypeKind::Int32: return builder->getInt32Ty();
+        case TypeKind::Int64: return builder->getInt64Ty();
         case TypeKind::Float: return builder->getDoubleTy();
+        case TypeKind::Float16: return builder->getHalfTy();
+        case TypeKind::Float32: return builder->getFloatTy();
+        case TypeKind::Float64: return builder->getDoubleTy();
         case TypeKind::Bool: return builder->getInt1Ty();
         case TypeKind::Char: return builder->getInt8Ty();
         case TypeKind::String: return builder->getPtrTy();
@@ -175,8 +181,14 @@ void CodeGenerator::codegenStmt(Stmt* stmt) {
     } else if (auto* vs = dynamic_cast<VarDeclStmt*>(stmt)) {
         auto* type = getLLVMType(vs->type.get());
         auto* alloca = builder->CreateAlloca(type, nullptr, vs->name);
-        if (vs->type->kind == TypeKind::Int || vs->type->kind == TypeKind::Float || vs->type->kind == TypeKind::Pointer || vs->type->kind == TypeKind::String) {
+        if (vs->type->kind == TypeKind::Int || vs->type->kind == TypeKind::Int64 || vs->type->kind == TypeKind::Float || vs->type->kind == TypeKind::Float64 || vs->type->kind == TypeKind::Pointer || vs->type->kind == TypeKind::String) {
              alloca->setAlignment(llvm::Align(8));
+        } else if (vs->type->kind == TypeKind::Int32 || vs->type->kind == TypeKind::Float32) {
+             alloca->setAlignment(llvm::Align(4));
+        } else if (vs->type->kind == TypeKind::Int16 || vs->type->kind == TypeKind::Float16) {
+             alloca->setAlignment(llvm::Align(2));
+        } else if (vs->type->kind == TypeKind::Char) {
+             alloca->setAlignment(llvm::Align(1));
         }
         if (vs->init) {
             auto* val = codegenExpr(vs->init.get());
@@ -279,12 +291,15 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
         }
         auto* l = codegenExpr(be->left.get());
         auto* r = codegenExpr(be->right.get());
-        bool isFloat = be->left->evaluatedType->kind == TypeKind::Float;
+        bool isFloat = be->left->evaluatedType->kind == TypeKind::Float ||
+                       be->left->evaluatedType->kind == TypeKind::Float16 ||
+                       be->left->evaluatedType->kind == TypeKind::Float32 ||
+                       be->left->evaluatedType->kind == TypeKind::Float64;
         if (be->op == "+") return isFloat ? builder->CreateFAdd(l, r) : builder->CreateAdd(l, r);
         if (be->op == "-") return isFloat ? builder->CreateFSub(l, r) : builder->CreateSub(l, r);
         if (be->op == "*") return isFloat ? builder->CreateFMul(l, r) : builder->CreateMul(l, r);
         if (be->op == "/") return isFloat ? builder->CreateFDiv(l, r) : builder->CreateSDiv(l, r);
-        if (be->op == "%") return builder->CreateSRem(l, r);
+        if (be->op == "%") return isFloat ? builder->CreateFRem(l, r) : builder->CreateSRem(l, r);
         if (be->op == "<<") return builder->CreateShl(l, r);
         if (be->op == ">>") return builder->CreateAShr(l, r);
         if (be->op == "==") return isFloat ? builder->CreateFCmpOEQ(l, r) : builder->CreateICmpEQ(l, r);
@@ -304,7 +319,11 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
             return builder->CreateLoad(getLLVMType(ue->evaluatedType.get()), ptr);
         }
         auto* val = codegenExpr(ue->expr.get());
-        if (ue->op == "-") return ue->evaluatedType->kind == TypeKind::Float ? builder->CreateFNeg(val) : builder->CreateNeg(val);
+        bool isFloat = ue->evaluatedType->kind == TypeKind::Float ||
+                       ue->evaluatedType->kind == TypeKind::Float16 ||
+                       ue->evaluatedType->kind == TypeKind::Float32 ||
+                       ue->evaluatedType->kind == TypeKind::Float64;
+        if (ue->op == "-") return isFloat ? builder->CreateFNeg(val) : builder->CreateNeg(val);
         if (ue->op == "!") return builder->CreateNot(val);
         return nullptr;
     } else if (auto* ce = dynamic_cast<CallExpr*>(expr)) {
@@ -404,9 +423,10 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
         if (sourceTy->isPointerTy() && targetTy->isIntegerTy()) return builder->CreatePtrToInt(val, targetTy);
         if (sourceTy->isIntegerTy() && targetTy->isPointerTy()) return builder->CreateIntToPtr(val, targetTy);
         if (sourceTy->isIntegerTy() && targetTy->isIntegerTy()) {
-            if (sourceTy->getIntegerBitWidth() < targetTy->getIntegerBitWidth())
-                return builder->CreateSExt(val, targetTy);
-            return builder->CreateTrunc(val, targetTy);
+            return builder->CreateIntCast(val, targetTy, true);
+        }
+        if (sourceTy->isFloatingPointTy() && targetTy->isFloatingPointTy()) {
+            return builder->CreateFPCast(val, targetTy);
         }
         if (sourceTy->isFloatingPointTy() && targetTy->isIntegerTy()) return builder->CreateFPToSI(val, targetTy);
         if (sourceTy->isIntegerTy() && targetTy->isFloatingPointTy()) return builder->CreateSIToFP(val, targetTy);

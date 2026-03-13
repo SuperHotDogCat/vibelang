@@ -45,7 +45,7 @@ T* setLoc(T* node, const YYLTYPE& loc) {
 %token <fval> FVAL
 %token <sval> SVAL IDENT
 %token IMPORT EXTERN STRUCT IMPL FN VAR IF ELSE WHILE RETURN TRUE FALSE AS
-%token VOID INT FLOAT BOOL CHAR STRING
+%token VOID INT INT16 INT32 INT64 FLOAT FLOAT16 FLOAT32 FLOAT64 BOOL CHAR STRING
 %token SHL SHR EQ NE LE GE ARROW ELLIPSIS
 
 %type <expr> expr primary_expr postfix_expr unary_expr cast_expr mul_expr add_expr shift_expr relational_expr equality_expr
@@ -174,7 +174,13 @@ type:
 base_type:
     VOID { $$ = new ScalarType(TypeKind::Void); }
     | INT { $$ = new ScalarType(TypeKind::Int); }
+    | INT16 { $$ = new ScalarType(TypeKind::Int16); }
+    | INT32 { $$ = new ScalarType(TypeKind::Int32); }
+    | INT64 { $$ = new ScalarType(TypeKind::Int64); }
     | FLOAT { $$ = new ScalarType(TypeKind::Float); }
+    | FLOAT16 { $$ = new ScalarType(TypeKind::Float16); }
+    | FLOAT32 { $$ = new ScalarType(TypeKind::Float32); }
+    | FLOAT64 { $$ = new ScalarType(TypeKind::Float64); }
     | BOOL { $$ = new ScalarType(TypeKind::Bool); }
     | CHAR { $$ = new ScalarType(TypeKind::Char); }
     | STRING { $$ = new ScalarType(TypeKind::String); }
@@ -197,8 +203,6 @@ expr_stmt:
 var_decl_stmt:
     VAR IDENT ':' type ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($4), *$2), @1); delete $2; }
     | VAR IDENT ':' type '=' expr ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($4), *$2, std::unique_ptr<Expr>($6)), @1); delete $2; }
-    | base_type IDENT '=' expr ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($1), *$2, std::unique_ptr<Expr>($4)), @2); delete $2; }
-    | base_type IDENT ';' { $$ = setLoc(new VarDeclStmt(std::shared_ptr<Type>($1), *$2), @2); delete $2; }
     ;
 
 block_stmt:
