@@ -23,6 +23,7 @@ nav:
       - Path Resolution: path_resolution.md
   - Internals:
       - C Interoperability: interop_internals.md
+      - Deployment: deployment.md
   - Contributing: contributing.md
 
 markdown_extensions:
