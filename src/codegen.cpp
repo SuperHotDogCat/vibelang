@@ -30,6 +30,7 @@ void CodeGenerator::generate(Program* program) {
     // Second pass: declare functions
     for (auto& decl : program->decls) {
         if (auto* fd = dynamic_cast<FunctionDecl*>(decl.get())) {
+            if (!fd->typeParams.empty()) continue;
             if (module->getFunction(fd->name)) {
                 continue;
             }
@@ -40,6 +41,7 @@ void CodeGenerator::generate(Program* program) {
             auto* ft = llvm::FunctionType::get(getLLVMType(fd->returnType.get()), argTypes, fd->isVariadic);
             llvm::Function::Create(ft, llvm::Function::ExternalLinkage, fd->name, *module);
         } else if (auto* id = dynamic_cast<ImplDecl*>(decl.get())) {
+            if (!id->typeParams.empty()) continue;
             for (auto& md : id->methods) {
                 std::string mangledName = id->structName + "_" + md->funcDecl->name;
                 if (module->getFunction(mangledName)) continue;
@@ -52,6 +54,17 @@ void CodeGenerator::generate(Program* program) {
                 auto* ft = llvm::FunctionType::get(getLLVMType(md->funcDecl->returnType.get()), argTypes, false);
                 llvm::Function::Create(ft, llvm::Function::ExternalLinkage, mangledName, *module);
             }
+        } else if (auto* md = dynamic_cast<MethodDecl*>(decl.get())) {
+            std::string mangledName = md->structName + "_" + md->funcDecl->name;
+            if (module->getFunction(mangledName)) continue;
+            std::vector<llvm::Type*> argTypes;
+            // 'self' parameter
+            argTypes.push_back(builder->getPtrTy());
+            for (auto& param : md->funcDecl->params) {
+                argTypes.push_back(getLLVMType(param.type.get()));
+            }
+            auto* ft = llvm::FunctionType::get(getLLVMType(md->funcDecl->returnType.get()), argTypes, false);
+            llvm::Function::Create(ft, llvm::Function::ExternalLinkage, mangledName, *module);
         }
     }
 
@@ -108,6 +121,7 @@ void CodeGenerator::codegenDecl(Decl* decl) {
         }
         namedValues[gv->varDecl->name] = gVar;
     } else if (auto* fd = dynamic_cast<FunctionDecl*>(decl)) {
+        if (!fd->typeParams.empty()) return; // Skip generic templates
         if (!fd->body) return; // External function
         auto* func = module->getFunction(fd->name);
         currentFunction = func;
@@ -135,6 +149,7 @@ void CodeGenerator::codegenDecl(Decl* decl) {
         }
         llvm::verifyFunction(*func);
     } else if (auto* id = dynamic_cast<ImplDecl*>(decl)) {
+        if (!id->typeParams.empty()) return; // Skip generic templates
         for (auto& md : id->methods) {
             std::string mangledName = id->structName + "_" + md->funcDecl->name;
             auto* func = module->getFunction(mangledName);
@@ -170,6 +185,40 @@ void CodeGenerator::codegenDecl(Decl* decl) {
             }
             llvm::verifyFunction(*func);
         }
+    } else if (auto* md = dynamic_cast<MethodDecl*>(decl)) {
+        std::string mangledName = md->structName + "_" + md->funcDecl->name;
+        auto* func = module->getFunction(mangledName);
+        currentFunction = func;
+        auto* bb = llvm::BasicBlock::Create(*context, "entry", func);
+        builder->SetInsertPoint(bb);
+
+        namedValues.clear();
+        auto& selfArg = *func->arg_begin();
+        selfArg.setName("self");
+        auto* selfAlloca = builder->CreateAlloca(selfArg.getType(), nullptr, "self");
+        builder->CreateStore(&selfArg, selfAlloca);
+        namedValues["self"] = selfAlloca;
+
+        int idx = 0;
+        for (auto it = func->arg_begin() + 1; it != func->arg_end(); ++it) {
+            auto& arg = *it;
+            arg.setName(md->funcDecl->params[idx].name);
+            auto* alloca = builder->CreateAlloca(arg.getType(), nullptr, arg.getName());
+            builder->CreateStore(&arg, alloca);
+            namedValues[md->funcDecl->params[idx].name] = alloca;
+            idx++;
+        }
+
+        codegenStmt(md->funcDecl->body.get());
+        auto* mlastBB = builder->GetInsertBlock();
+        if (!mlastBB->getTerminator()) {
+             if (md->funcDecl->returnType->kind == TypeKind::Int) builder->CreateRet(builder->getInt64(0));
+             else if (md->funcDecl->returnType->kind == TypeKind::Float) builder->CreateRet(llvm::ConstantFP::get(*context, llvm::APFloat(0.0)));
+             else if (md->funcDecl->returnType->kind == TypeKind::Bool) builder->CreateRet(builder->getInt1(false));
+             else if (md->funcDecl->returnType->kind == TypeKind::Pointer || md->funcDecl->returnType->kind == TypeKind::String) builder->CreateRet(llvm::ConstantPointerNull::get(builder->getPtrTy()));
+             else if (md->funcDecl->returnType->kind == TypeKind::Void) builder->CreateRetVoid();
+        }
+        llvm::verifyFunction(*func);
     }
 }
 
@@ -192,6 +241,14 @@ void CodeGenerator::codegenStmt(Stmt* stmt) {
         }
         if (vs->init) {
             auto* val = codegenExpr(vs->init.get());
+            if (val->getType() != type) {
+                 if (type->isFloatingPointTy()) {
+                      if (val->getType()->isFloatingPointTy()) val = builder->CreateFPCast(val, type);
+                      else val = builder->CreateSIToFP(val, type);
+                 } else if (type->isIntegerTy()) {
+                      if (val->getType()->isIntegerTy()) val = builder->CreateIntCast(val, type, true);
+                 }
+            }
             builder->CreateStore(val, alloca);
         }
         namedValues[vs->name] = alloca;
@@ -269,8 +326,18 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
                 ptr = namedValues[vve->name];
                 if (!ptr) ptr = module->getGlobalVariable(vve->name);
             } else if (auto* ma = dynamic_cast<MemberAccessExpr*>(be->left.get())) {
-                auto* obj = codegenExpr(ma->object.get());
-                llvm::Value* structPtr = obj;
+                llvm::Value* structPtr = nullptr;
+                if (auto* vve = dynamic_cast<VariableExpr*>(ma->object.get())) {
+                    structPtr = namedValues[vve->name];
+                if (vve->evaluatedType->kind != TypeKind::Pointer) {
+                     // If it's not a pointer, and it's a variable, it might be an alloca
+                     // structPtr is already the pointer to the struct
+                } else {
+                     structPtr = builder->CreateLoad(builder->getPtrTy(), structPtr);
+                }
+                } else {
+                    structPtr = codegenExpr(ma->object.get());
+                }
                 auto structType = ma->object->evaluatedType;
                 if (structType->kind == TypeKind::Pointer) structType = static_cast<PointerType*>(structType.get())->base;
                 auto structName = static_cast<StructType*>(structType.get())->name;
@@ -291,10 +358,27 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
         }
         auto* l = codegenExpr(be->left.get());
         auto* r = codegenExpr(be->right.get());
-        bool isFloat = be->left->evaluatedType->kind == TypeKind::Float ||
-                       be->left->evaluatedType->kind == TypeKind::Float16 ||
-                       be->left->evaluatedType->kind == TypeKind::Float32 ||
-                       be->left->evaluatedType->kind == TypeKind::Float64;
+
+        // Handle implicit promotion in codegen
+        auto* lTy = l->getType();
+        auto* rTy = r->getType();
+        if (lTy != rTy) {
+             if (lTy->isFloatingPointTy() || rTy->isFloatingPointTy()) {
+                  if (!lTy->isFloatingPointTy()) l = builder->CreateSIToFP(l, rTy);
+                  else if (!rTy->isFloatingPointTy()) r = builder->CreateSIToFP(r, lTy);
+                  else {
+                       // Both floats but different width
+                       if (lTy->getFPMantissaWidth() < rTy->getFPMantissaWidth()) l = builder->CreateFPCast(l, rTy);
+                       else r = builder->CreateFPCast(r, lTy);
+                  }
+             } else {
+                  // Both integers
+                  if (lTy->getIntegerBitWidth() < rTy->getIntegerBitWidth()) l = builder->CreateSExt(l, rTy);
+                  else r = builder->CreateSExt(r, lTy);
+             }
+        }
+
+        bool isFloat = l->getType()->isFloatingPointTy();
         if (be->op == "+") return isFloat ? builder->CreateFAdd(l, r) : builder->CreateAdd(l, r);
         if (be->op == "-") return isFloat ? builder->CreateFSub(l, r) : builder->CreateSub(l, r);
         if (be->op == "*") return isFloat ? builder->CreateFMul(l, r) : builder->CreateMul(l, r);
@@ -384,6 +468,9 @@ llvm::Value* CodeGenerator::codegenExpr(Expr* expr) {
         auto structName = static_cast<StructType*>(structType.get())->name;
         std::string mangledName = structName + "_" + mc->methodName;
         auto* func = module->getFunction(mangledName);
+        if (!func) {
+            throw std::runtime_error("Undefined method in codegen: " + mangledName);
+        }
         std::vector<llvm::Value*> args;
 
         llvm::Value* selfPtr = nullptr;

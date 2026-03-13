@@ -46,7 +46,39 @@ impl Rectangle {
 ### Methods and `self`
 Methods are defined within `impl` blocks. The `self` keyword refers to a pointer to the instance of the struct the method is called on.
 
-## 3. Memory Management
+### Generics and Monomorphization
+Novus supports generics for structs and `impl` blocks. When a generic struct is instantiated with concrete type arguments (e.g., `Box[int]`), the compiler generates a specialized version of the struct and its methods.
+
+- **Syntax**: `struct Name[T1, T2] { ... }`
+- **Reference**: Use `@T` to refer to the type parameter within the struct or `impl` block.
+- **Methods**: Methods in an `impl[T] StructName` block are specialized whenever `StructName[ConcreteType]` is used.
+
+```rust
+struct Pair[K, V] {
+    first: @K;
+    second: @V;
+}
+```
+
+## 3. Numeric Types and Promotion
+Novus provides a range of signed integer and floating-point types with specific bit-widths.
+
+- **Integers**: `int16`, `int32`, `int64`, and `int` (alias for `int64`).
+- **Floats**: `float16`, `float32`, `float64`, and `float` (alias for `float64`).
+
+### Type Promotion Rules
+The compiler automatically promotes smaller types to larger types when necessary:
+- `int16` -> `int32` -> `int64`
+- `float16` -> `float32` -> `float64`
+- Any integer type can be promoted to `float` or `float64`.
+
+For explicit conversion between incompatible types, use the `as` operator:
+```rust
+var x: float = 3.14;
+var i: int = x as int;
+```
+
+## 4. Memory Management
 
 Novus provides low-level control over memory, similar to C.
 

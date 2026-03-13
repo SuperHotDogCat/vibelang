@@ -1,0 +1,58 @@
+import "std.nov";
+
+struct Vector[T] {
+    data: @T*;
+    size: int;
+    capacity: int;
+}
+
+impl[T] Vector {
+    fn init(cap: int) -> void {
+        var c: int = cap;
+        if (c <= 0) { c = 10; }
+        self.data = malloc(c * 8) as @T*;
+        self.size = 0;
+        self.capacity = c;
+    }
+
+    fn resize(new_cap: int) -> void {
+        if (new_cap <= self.capacity) {
+            return;
+        }
+        var new_data: @T* = malloc(new_cap * 8) as @T*;
+        var i: int = 0;
+        while (i < self.size) {
+            new_data[i] = self.data[i];
+            i = i + 1;
+        }
+        free(self.data as void*);
+        self.data = new_data;
+        self.capacity = new_cap;
+    }
+
+    fn push(val: @T) -> void {
+        if (self.size == self.capacity) {
+            self.resize(self.capacity * 2);
+        }
+        self.data[self.size] = val;
+        self.size = self.size + 1;
+    }
+
+    fn get(idx: int) -> @T {
+        return self.data[idx];
+    }
+}
+
+fn main() -> int {
+    var v: Vector[int];
+    v.init(10);
+    v.push(10);
+    v.get(0);
+
+    var v2: Vector[float];
+    v2.init(1.0);
+    v2.push(1.0);
+    v2.get(0);
+
+    return 0;
+}

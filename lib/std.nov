@@ -36,17 +36,17 @@ fn hash_string(val: string) -> int {
 
 // Data Structures
 
-struct Vector {
-    data: int*;
+struct Vector[T] {
+    data: @T*;
     size: int;
     capacity: int;
 }
 
-impl Vector {
+impl[T] Vector {
     fn init(cap: int) -> void {
         var c: int = cap;
         if (c <= 0) { c = 10; }
-        self.data = malloc(c * 8) as int*;
+        self.data = malloc(c * 8) as @T*;
         self.size = 0;
         self.capacity = c;
     }
@@ -55,7 +55,7 @@ impl Vector {
         if (new_cap <= self.capacity) {
             return;
         }
-        var new_data: int* = malloc(new_cap * 8) as int*;
+        var new_data: @T* = malloc(new_cap * 8) as @T*;
         var i: int = 0;
         while (i < self.size) {
             new_data[i] = self.data[i];
@@ -66,7 +66,7 @@ impl Vector {
         self.capacity = new_cap;
     }
 
-    fn push(val: int) -> void {
+    fn push(val: @T) -> void {
         if (self.size == self.capacity) {
             self.resize(self.capacity * 2);
         }
@@ -74,7 +74,7 @@ impl Vector {
         self.size = self.size + 1;
     }
 
-    fn get(idx: int) -> int {
+    fn get(idx: int) -> @T {
         return self.data[idx];
     }
 }
